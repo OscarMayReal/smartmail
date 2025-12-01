@@ -1,0 +1,11 @@
+* {
+    --qu-accent: #1c8b5f;
+    --qu-background: rgb(245, 245, 245);
+    --qu-background-sidebar: rgb(250, 250, 250);
+    --qu-text: #666666;
+    --header-background: #ffffff;
+    --qu-text-secondary: #999999;
+    --qu-border-color: #e4e4e7;
+    --qu-header-background: #ffffff;
+    font-family: "Figtree", sans-serif;
+}
