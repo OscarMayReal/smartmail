@@ -2,7 +2,7 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { JSX, useEffect, useRef, useState } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ArrowLeftIcon, Building2Icon, ChevronDownIcon, LayoutGrid, LogInIcon, LogOutIcon, MenuIcon, SearchIcon, SettingsIcon, SparklesIcon, UserIcon, UsersIcon } from "lucide-react";
+import { ArrowLeftIcon, BellIcon, Building2Icon, ChevronDownIcon, LayoutGrid, LogInIcon, LogOutIcon, MenuIcon, SearchIcon, SettingsIcon, SparklesIcon, UserIcon, UsersIcon } from "lucide-react";
 import { useWindowSize } from "@/lib/screensize";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 // import { AdminSidebar, TeamSidebar, UserSidebar } from "./sidebar";
@@ -43,7 +43,22 @@ export const Header = ({ title, auth }: { title: string, auth: any }) => {
                     <SearchBox />
                 </div>
             </div>
-            <Button variant="ghost" size={"icon-sm"} className="mr-2" onClick={() => { setOpen(true) }}><SettingsIcon /></Button>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size={"icon-sm"} className="mr-2" onClick={() => { setOpen(true) }}><BellIcon /></Button>
+                </TooltipTrigger>
+                <TooltipContent style={{ backgroundColor: "black", color: "white" }}>
+                    Notifications
+                </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size={"icon-sm"} className="mr-2" onClick={() => { setOpen(true) }}><SettingsIcon /></Button>
+                </TooltipTrigger>
+                <TooltipContent style={{ backgroundColor: "black", color: "white" }}>
+                    Settings
+                </TooltipContent>
+            </Tooltip>
             <HeaderUser auth={auth} />
         </header>
     );
@@ -94,7 +109,7 @@ export function UserItem({ user, Extra, onClick }: { user: any, Extra?: JSX.Elem
     return (
         <div className="flex items-center gap-2" onClick={onClick}>
             <Avatar className="border border-[var(--qu-border-color)]" style={{ fontSize: "14px", fontWeight: "400" }}>
-                <AvatarFallback style={{ color: "var(--qu-text)" }}>{user.name.charAt(0).toUpperCase() + user.name.charAt(1).toUpperCase()}</AvatarFallback>
+                {user.name ? <AvatarFallback style={{ color: "var(--qu-text)" }}>{user.name.charAt(0).toUpperCase() + user.name.charAt(1).toUpperCase()}</AvatarFallback> : null}
             </Avatar>
             <div className="grid flex-1 text-left leading-tight">
                 <span className="truncate font-semibold text-sm color-[var(--qu-text)]">{user.name}</span>
@@ -118,10 +133,10 @@ function HeaderUser({ auth }: { auth: any }) {
                     <Tooltip>
                         <TooltipTrigger>
                             <Avatar style={{ width: "30px", height: "30px", marginRight: "10px", border: "1px solid var(--qu-border-color)" }}>
-                                <AvatarFallback style={{ color: "var(--qu-text)" }}>{auth.data?.user?.name.charAt(0).toUpperCase() + auth.data?.user?.name.charAt(1).toUpperCase()}</AvatarFallback>
+                                {auth.data?.user?.name ? <AvatarFallback style={{ color: "var(--qu-text)" }}>{auth.data?.user?.name.charAt(0).toUpperCase() + auth.data?.user?.name.charAt(1).toUpperCase()}</AvatarFallback> : null}
                             </Avatar>
                         </TooltipTrigger>
-                        <TooltipContent>
+                        <TooltipContent style={{ backgroundColor: "black", color: "white" }}>
                             Your Account
                         </TooltipContent>
                     </Tooltip>
