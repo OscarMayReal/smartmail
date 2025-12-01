@@ -8,5 +8,7 @@
     --qu-border-color: #e4e4e7;
     --qu-header-background: #ffffff;
     --qu-text-secondary: #999999;
+    --qu-item-hover: rgba(0, 0, 0, 0.063);
+    --qu-item-active: rgba(0, 198, 115, 0.125);
     font-family: "Figtree", sans-serif;
 }

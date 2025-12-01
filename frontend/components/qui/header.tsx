@@ -39,7 +39,7 @@ export const Header = ({ title, auth }: { title: string, auth: any }) => {
             <div style={{ width: "15px" }} />
             <div className="header-title">{title}</div>
             <div style={{ flex: 1 }}>
-                <div style={{ width: "500px", position: "absolute", left: "50%", transform: "translate(-50%, -50%)", top: "50%" }}>
+                <div style={{ width: "350px", position: "absolute", left: "310px", transform: "translateY(-50%)", top: "50%" }}>
                     <SearchBox />
                 </div>
             </div>

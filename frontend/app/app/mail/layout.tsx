@@ -5,7 +5,7 @@ import { ChevronDownIcon, FolderIcon, PenIcon, TagIcon } from "lucide-react";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 export default function MailPage({ children }: { children: React.ReactNode }) {
     return (
-        <div>
+        <div className="flex flex-row h-full w-full">
             <div className="folder-sidebar">
                 <ButtonGroup className="w-full p-[10px]">
                     <Button className="flex-1" variant="outline"><PenIcon /> Compose</Button>
