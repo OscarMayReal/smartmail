@@ -1,17 +1,27 @@
-"use client";
-import { NavigationSidebar } from "@/components/components/sidebar";
-import { Header } from "@/components/qui/header";
-import { useAuth } from "keystone-lib";
-
-export default function MailLayout({ children }: { children: React.ReactNode }) {
-    const auth = useAuth({ keystoneUrl: process.env.NEXT_PUBLIC_KEYSTONE_URL!, appId: process.env.NEXT_PUBLIC_APPID! });
+import { FolderSidebarGroup } from "@/components/components/folder";
+import { ButtonGroup } from "@/components/ui/button-group";
+import { Button } from "@/components/ui/button";
+import { ChevronDownIcon, FolderIcon, PenIcon, TagIcon } from "lucide-react";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+export default function MailPage({ children }: { children: React.ReactNode }) {
     return (
-        <div className="page-header-container">
-            <Header title="Mail" auth={auth} />
-            <div className="page-sidebar-split">
-                <NavigationSidebar />
-                {children}
+        <div>
+            <div className="folder-sidebar">
+                <ButtonGroup className="w-full p-[10px]">
+                    <Button className="flex-1" variant="outline"><PenIcon /> Compose</Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline"><ChevronDownIcon /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem><FolderIcon />Folder</DropdownMenuItem>
+                            <DropdownMenuItem><TagIcon />Label</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </ButtonGroup>
+                <FolderSidebarGroup folders={[{ name: "Inbox", type: "smartmail.folder.inbox", id: 0 }, { name: "Sent", type: "smartmail.folder.sent", id: 1 }, { name: "Drafts", type: "smartmail.folder.drafts", id: 2 }, { name: "Trash", type: "smartmail.folder.trash", id: 3 }]} title="Folders" />
             </div>
+            {children}
         </div>
     );
 }

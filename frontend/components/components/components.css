@@ -1,0 +1,49 @@
+.folder-sidebar {
+    padding: 10px;
+    width: 250px;
+    background-color: var(--qu-sidebar-background);
+    height: 100%;
+    border-right: 1px solid var(--qu-border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.folder-sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    color: var(--qu-text);
+    transition: background-color 0.2s ease-in-out;
+    padding: 5px 10px;
+    border-radius: 8px;
+}
+
+.folder-sidebar-item:hover {
+    cursor: pointer;
+    background-color: rgba(0, 0, 0, 0.063);
+}
+
+.folder-sidebar-item.active {
+    background-color: rgba(0, 198, 115, 0.125);
+    color: var(--qu-accent);
+}
+
+.folder-sidebar-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.folder-sidebar-group-title {
+    font-size: 14px;
+    padding-left: 10px;
+    color: var(--qu-text-secondary);
+}
+
+.folder-sidebar-group-items {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}

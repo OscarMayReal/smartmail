@@ -3,6 +3,7 @@ import { Figtree, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./qui-colors.css";
 import "./qui-shell.css";
+import "@/components/components/components.css";
 
 const figtree = Figtree({
   variable: "--font-figtree",
