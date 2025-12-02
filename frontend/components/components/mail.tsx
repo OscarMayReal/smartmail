@@ -2,7 +2,7 @@
 import "./components.css";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Checkbox } from "../ui/checkbox";
-import { ArchiveIcon, BoldIcon, Code2Icon, CodeIcon, FolderInputIcon, ForwardIcon, ItalicIcon, ListIcon, ListOrderedIcon, QuoteIcon, RedoIcon, ReplyIcon, SendIcon, StrikethroughIcon, Trash2Icon, UndoIcon, XIcon } from "lucide-react";
+import { ArchiveIcon, BoldIcon, Code2Icon, CodeIcon, FolderIcon, FolderInputIcon, ForwardIcon, InboxIcon, ItalicIcon, ListIcon, ListOrderedIcon, PencilIcon, QuoteIcon, RedoIcon, ReplyIcon, SendIcon, StrikethroughIcon, Trash2Icon, UndoIcon, XIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { Toggle } from "../ui/toggle";
 import { Switch } from "../ui/switch";
@@ -14,6 +14,10 @@ import { useContext } from "react";
 import { GlobalContext } from "@/app/app/layout";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { MailContext } from "@/app/app/mail/layout";
+import { toast } from "sonner";
 
 export function MailItem({ item }: { item: any }) {
     const router = useRouter();
@@ -54,7 +58,8 @@ export function MailItemHeader({ message }: { message: email }) {
             <ButtonGroup>
                 <Button variant="outline" size="sm"><Trash2Icon />Delete</Button>
                 <Button variant="outline" size="sm"><ArchiveIcon /> Archive</Button>
-                <Button variant="outline" size="sm"><FolderInputIcon /> Move</Button>
+                {/* <Button variant="outline" size="sm"><FolderInputIcon /> Move</Button> */}
+                <MoveEmailDropdown messageId={message.id} />
             </ButtonGroup>
         </div>
     );
@@ -98,6 +103,84 @@ function ReplyForwardHeader() {
     );
 }
 
+function MoveEmailDropdown({ messageId }: { messageId: string }) {
+    const { folders } = useContext(MailContext)
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline"><FolderInputIcon /> Move</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="p-0">
+                <Command>
+                    <CommandInput placeholder="Search folders..." />
+                    <CommandList>
+                        <CommandEmpty>No folders found.</CommandEmpty>
+                        <CommandGroup>
+                            {folders.map((folder) => (
+                                <MoveEmailItem key={folder.id} folder={folder} messageId={messageId} />
+                            ))}
+                        </CommandGroup>
+                    </CommandList>
+                </Command>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
+function MoveEmailItem({ folder, messageId }: { folder: any, messageId: string }) {
+    const { auth } = useContext(GlobalContext)
+    const { setMessages, messages } = useContext(MailContext)
+    const router = useRouter()
+    const params = useParams()
+    var Icon = FolderIcon
+    switch (folder.type) {
+        case "smartmail.folder.inbox":
+            Icon = InboxIcon
+            break;
+        case "smartmail.folder.sent":
+            Icon = SendIcon
+            break;
+        case "smartmail.folder.drafts":
+            Icon = PencilIcon
+            break;
+        case "smartmail.folder.trash":
+            Icon = Trash2Icon
+            break;
+    }
+    return (
+        <CommandItem disabled={folder.id == params.id} key={folder.id} onSelect={async () => {
+            await fetch(`/api/mail/messages/${messageId}/move`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + auth.data?.sessionId,
+                },
+                body: JSON.stringify({ folderId: folder.id }),
+            })
+            var newMessages = await fetch(`/api/mail/folders/${params.id}/messages`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + auth.data?.sessionId,
+                },
+            }).then((res) => res.json())
+            const thisMessagePosition = messages.findIndex((message) => message.id === messageId)
+            if (thisMessagePosition < messages.length - 1) {
+                router.push(`/app/mail/mailbox/${params.id}/message/${messages[thisMessagePosition + 1].id}`)
+            } else if (thisMessagePosition > 0) {
+                router.push(`/app/mail/mailbox/${params.id}/message/${messages[thisMessagePosition - 1].id}`)
+            } else {
+                router.push(`/app/mail/mailbox/${params.id}`)
+            }
+            setMessages(newMessages)
+            toast.success("Email moved to " + folder.name)
+        }}>
+            <Icon />
+            {folder.name}
+        </CommandItem>
+    );
+}
+
 export function ReplyComposer({ setReplyMode, replyMode, message }: { setReplyMode: (mode: "reply" | "forward" | null) => void, replyMode: "reply" | "forward" | null, message: email }) {
     const editor = useEditor({
         extensions: [
@@ -105,11 +188,13 @@ export function ReplyComposer({ setReplyMode, replyMode, message }: { setReplyMo
         ],
         content: replyMode == "reply" ? `
             <p></p>
+            <p>Sent with SmartMail</p>
             <hr />
             <p>On ${new Date(message.date).toDateString()} at ${new Date(message.date).toLocaleTimeString()} ${message.name} wrote:</p>
             <p>${message.email.html}</p>
         ` : replyMode == "forward" ? `
             <p></p>
+            <p>Sent with SmartMail</p>
             <hr />
             <p>===== Forwarded message =====</p>
             <p>From ${message.name} <${message.from}></p>

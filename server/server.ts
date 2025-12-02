@@ -1,7 +1,7 @@
 import express from "express";
 import { verifySessionMiddleware } from "./middleware.ts";
 import "dotenv/config";
-import { getEmailById, getMailAccountFolders, getMailAccountMessages } from "./functions/mail.ts";
+import { getEmailById, getMailAccountFolders, getMailAccountMessages, moveEmail } from "./functions/mail.ts";
 import { getAccountByAddress, getAccountsByUserId } from "./functions/mailaccounts.ts";
 import { receiveEmail } from "./functions/mail.ts";
 
@@ -23,6 +23,12 @@ app.get("/mail/folders/:folderId/messages", async (req, res) => {
 
 app.get("/mail/messages/:messageId", async (req, res) => {
     const message = await getEmailById(req.params.messageId);
+    res.json(message);
+});
+
+app.post("/mail/messages/:messageId/move", async (req, res) => {
+    const { folderId } = req.body;
+    const message = await moveEmail({ id: req.params.messageId, folderId });
     res.json(message);
 });
 

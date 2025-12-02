@@ -32,6 +32,17 @@ export function getEmailById(id: string) {
     })
 }
 
+export function moveEmail({ id, folderId }: { id: string, folderId: string }) {
+    return prisma.email.update({
+        where: {
+            id
+        },
+        data: {
+            folderId
+        }
+    })
+}
+
 export async function receiveEmail({ accountId, email }: { accountId: string, email: any }) {
     var account = await prisma.emailaccount.findUnique({
         where: {

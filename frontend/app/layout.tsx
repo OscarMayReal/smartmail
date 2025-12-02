@@ -4,6 +4,7 @@ import "./globals.css";
 import "./qui-colors.css";
 import "./qui-shell.css";
 import "@/components/components/components.css";
+import { Toaster } from "@/components/ui/sonner";
 
 const figtree = Figtree({
   variable: "--font-figtree",
@@ -31,6 +32,7 @@ export default function RootLayout({
         className={`${figtree.variable} ${dmMono.variable} antialiased`}
       >
         {children}
+        <Toaster />
       </body>
     </html>
   );
