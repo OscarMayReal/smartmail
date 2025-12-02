@@ -103,6 +103,22 @@ export function ReplyComposer({ setReplyMode, replyMode, message }: { setReplyMo
         extensions: [
             StarterKit
         ],
+        content: replyMode == "reply" ? `
+            <p></p>
+            <hr />
+            <p>On ${new Date(message.date).toDateString()} at ${new Date(message.date).toLocaleTimeString()} ${message.name} wrote:</p>
+            <p>${message.email.html}</p>
+        ` : replyMode == "forward" ? `
+            <p></p>
+            <hr />
+            <p>===== Forwarded message =====</p>
+            <p>From ${message.name} <${message.from}></p>
+            <p>To ${message.to}</p>
+            <p>Date: ${new Date(message.date).toDateString()} at ${new Date(message.date).toLocaleTimeString()}</p>
+            <p>Subject: ${message.subject}</p>
+            <p>===== Forwarded message =====</p>
+            <p>${message.email.html}</p>
+        ` : "",
         immediatelyRender: false
     })
     const editorState = useEditorState({
