@@ -1,5 +1,5 @@
 "use client";
-import { InboxIcon, FolderIcon, SendIcon, PencilIcon, Trash2Icon } from "lucide-react";
+import { InboxIcon, FolderIcon, SendIcon, PencilIcon, Trash2Icon, ArchiveIcon } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { Badge } from "../ui/badge";
 import { folder } from "@/../server/generated/prisma/browser";
@@ -7,21 +7,7 @@ import { folder } from "@/../server/generated/prisma/browser";
 export function FolderSidebarItem({ folder }: { folder: folder }) {
     const router = useRouter();
     const path = usePathname();
-    var Icon = FolderIcon
-    switch (folder.type) {
-        case "smartmail.folder.inbox":
-            Icon = InboxIcon
-            break;
-        case "smartmail.folder.sent":
-            Icon = SendIcon
-            break;
-        case "smartmail.folder.drafts":
-            Icon = PencilIcon
-            break;
-        case "smartmail.folder.trash":
-            Icon = Trash2Icon
-            break;
-    }
+    var Icon = getTypeIcon(folder.type)
     return (
         <div className={`folder-sidebar-item ${path.startsWith(`/app/mail/mailbox/${folder.id}`) ? "active" : ""}`} onClick={() => { router.push(`/app/mail/mailbox/${folder.id}`) }}>
             <Icon size="20" />
@@ -30,6 +16,23 @@ export function FolderSidebarItem({ folder }: { folder: folder }) {
             {/* {folder.unreadCount > 0 && <Badge variant="outline" className="text-[var(--qu-text)] bg-[var(--qu-header-background)]">{folder.unreadCount}</Badge>} */}
         </div>
     );
+}
+
+export function getTypeIcon(type: string) {
+    switch (type) {
+        case "smartmail.folder.inbox":
+            return InboxIcon
+        case "smartmail.folder.sent":
+            return SendIcon
+        case "smartmail.folder.drafts":
+            return PencilIcon
+        case "smartmail.folder.trash":
+            return Trash2Icon
+        case "smartmail.folder.archive":
+            return ArchiveIcon
+        default:
+            return FolderIcon
+    }
 }
 
 export function FolderSidebarGroup({ folders, title }: { folders: folder[], title: string }) {

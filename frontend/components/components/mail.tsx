@@ -18,6 +18,36 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/compon
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { MailContext } from "@/app/app/mail/layout";
 import { toast } from "sonner";
+import { getTypeIcon } from "./folder";
+import { folder } from "../../../server/generated/prisma/browser";
+
+export async function moveEmailInteractive({ messageId, messages, router, params, setMessages, folder, auth }: { messageId: string, messages: email[], router: any, params: any, setMessages: (messages: email[]) => void, folder: folder, auth: any }) {
+    await fetch(`/api/mail/messages/${messageId}/move`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + auth.data?.sessionId,
+        },
+        body: JSON.stringify({ folderId: folder.id }),
+    })
+    var newMessages = await fetch(`/api/mail/folders/${params.id}/messages`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + auth.data?.sessionId,
+        },
+    }).then((res) => res.json())
+    const thisMessagePosition = messages.findIndex((message) => message.id === messageId)
+    if (thisMessagePosition < messages.length - 1) {
+        router.push(`/app/mail/mailbox/${params.id}/message/${messages[thisMessagePosition + 1].id}`)
+    } else if (thisMessagePosition > 0) {
+        router.push(`/app/mail/mailbox/${params.id}/message/${messages[thisMessagePosition - 1].id}`)
+    } else {
+        router.push(`/app/mail/mailbox/${params.id}`)
+    }
+    setMessages(newMessages)
+    toast.success("Email moved to " + folder.name)
+}
 
 export function MailItem({ item }: { item: any }) {
     const router = useRouter();
@@ -50,14 +80,22 @@ export function MailboxHeader({ title }: { title: string }) {
 }
 
 export function MailItemHeader({ message }: { message: email }) {
+    const { auth } = useContext(GlobalContext)
+    const { setMessages, messages, folders } = useContext(MailContext)
+    const router = useRouter();
+    const params = useParams();
     return (
         <div className="mail-header">
             <XIcon size="20" />
             <div className="mail-header-title">{message.subject}</div>
             <div className="flex-1" />
             <ButtonGroup>
-                <Button variant="outline" size="sm"><Trash2Icon />Delete</Button>
-                <Button variant="outline" size="sm"><ArchiveIcon /> Archive</Button>
+                {folders.filter((folder) => folder.type == "smartmail.folder.trash")[0].id != params.id && <Button variant="outline" size="sm" onClick={() => {
+                    moveEmailInteractive({ messageId: message.id, messages, router, params, setMessages, folder: folders.filter((folder) => folder.type == "smartmail.folder.trash")[0], auth })
+                }}><Trash2Icon />Delete</Button>}
+                {folders.filter((folder) => folder.type == "smartmail.folder.archive")[0].id != params.id && <Button variant="outline" size="sm" onClick={() => {
+                    moveEmailInteractive({ messageId: message.id, messages, router, params, setMessages, folder: folders.filter((folder) => folder.type == "smartmail.folder.archive")[0], auth })
+                }}><ArchiveIcon /> Archive</Button>}
                 {/* <Button variant="outline" size="sm"><FolderInputIcon /> Move</Button> */}
                 <MoveEmailDropdown messageId={message.id} />
             </ButtonGroup>
@@ -132,51 +170,13 @@ function MoveEmailItem({ folder, messageId }: { folder: any, messageId: string }
     const { setMessages, messages } = useContext(MailContext)
     const router = useRouter()
     const params = useParams()
-    var Icon = FolderIcon
-    switch (folder.type) {
-        case "smartmail.folder.inbox":
-            Icon = InboxIcon
-            break;
-        case "smartmail.folder.sent":
-            Icon = SendIcon
-            break;
-        case "smartmail.folder.drafts":
-            Icon = PencilIcon
-            break;
-        case "smartmail.folder.trash":
-            Icon = Trash2Icon
-            break;
-    }
+    var Icon = getTypeIcon(folder.type)
     return (
         <CommandItem disabled={folder.id == params.id} key={folder.id} onSelect={async () => {
-            await fetch(`/api/mail/messages/${messageId}/move`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer " + auth.data?.sessionId,
-                },
-                body: JSON.stringify({ folderId: folder.id }),
-            })
-            var newMessages = await fetch(`/api/mail/folders/${params.id}/messages`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer " + auth.data?.sessionId,
-                },
-            }).then((res) => res.json())
-            const thisMessagePosition = messages.findIndex((message) => message.id === messageId)
-            if (thisMessagePosition < messages.length - 1) {
-                router.push(`/app/mail/mailbox/${params.id}/message/${messages[thisMessagePosition + 1].id}`)
-            } else if (thisMessagePosition > 0) {
-                router.push(`/app/mail/mailbox/${params.id}/message/${messages[thisMessagePosition - 1].id}`)
-            } else {
-                router.push(`/app/mail/mailbox/${params.id}`)
-            }
-            setMessages(newMessages)
-            toast.success("Email moved to " + folder.name)
+            moveEmailInteractive({ messageId, folderId: folder.id, messages, router, params, setMessages, folder, auth })
         }}>
             <Icon />
-            {folder.name}
+            {folder.name + (folder.id == params.id ? " (Current)" : "")}
         </CommandItem>
     );
 }

@@ -74,6 +74,17 @@ export async function createMailAccount({
                 name: "Trash",
                 type: "smartmail.folder.trash"
             }
+        }),
+        prisma.folder.create({
+            data: {
+                account: {
+                    connect: {
+                        id: mailaccount.id
+                    }
+                },
+                name: "Archive",
+                type: "smartmail.folder.archive"
+            }
         })
     ])
     return mailaccount;
