@@ -207,6 +207,13 @@ body {
     transform: translate(-50%, -50%);
 }
 
+.sidebar-section-title {
+    font-size: 16px;
+    margin-bottom: 5px;
+    color: var(--qu-text-secondary);
+    margin-left: 5px;
+}
+
 code {
     font-family: 'DM Mono', monospace;
 }

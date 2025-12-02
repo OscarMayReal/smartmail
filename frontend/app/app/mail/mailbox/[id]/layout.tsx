@@ -27,7 +27,7 @@ export default function MailboxLayout({ children }: { children: React.ReactNode 
             <div className="mailbox-sidebar">
                 <MailboxHeader title="Inbox" />
                 {messages.length == 0 ? (
-                    <Empty className="flex flex-col items-center justify-center h-full w-full, gap-2">
+                    <Empty className="flex flex-col items-center justify-center h-full w-full gap-2">
                         <EmptyMedia variant="icon" >
                             <SparklesIcon />
                         </EmptyMedia>

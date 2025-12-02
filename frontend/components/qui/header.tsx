@@ -16,6 +16,41 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { useContext } from "react";
 import { GlobalContext } from "@/app/app/layout";
 
+export const AdminHeader = ({ auth }: { auth: any }) => {
+    const router = useRouter();
+    const size = useWindowSize();
+    const [open, setOpen] = useState(false);
+    const path = usePathname();
+    const searchParams = useSearchParams()
+    useEffect(() => {
+        if (auth.data?.user?.id && auth.loaded) {
+            console.log(auth.data);
+        } else if (auth.data?.error && auth.loaded) {
+            window.location.href = process.env.NEXT_PUBLIC_API_URL + "/auth/signin?redirectTo=" + window.location.href;
+        }
+    }, [auth]);
+    if (auth.data?.tenant?.type == "Team" && !path.startsWith("/account")) {
+        router.push("/account");
+    }
+    const { settingsOpen, setSettingsOpen } = useContext(GlobalContext);
+    return (
+        <header>
+            {/* {tenant.data?.tenant?.type === "Organization" ? <Launcher /> : null} */}
+            {auth.data?.tenant?.logo && <div style={{ width: "10px" }} />}
+            {/* <SidebarDrawer open={open} onOpenChange={setOpen} /> */}
+            {auth.data?.tenant?.logo ? <><img src={auth.data?.tenant?.logo} className="header-logo" /><div className="header-logo-divider" /></> : null}
+            <div style={{ width: "15px" }} />
+            <div className="header-title">SmartMail Admin Center</div>
+            <div style={{ flex: 1 }}>
+                <div style={{ width: "350px", position: "absolute", left: "50%", transform: "translate(-50%, -50%)", top: "50%" }}>
+                    <SearchBox />
+                </div>
+            </div>
+            <HeaderUser auth={auth} />
+        </header>
+    );
+};
+
 export const Header = ({ auth }: { auth: any }) => {
     const router = useRouter();
     const size = useWindowSize();
@@ -149,8 +184,10 @@ function HeaderUser({ auth }: { auth: any }) {
                 <div className="p-2">
                     <UserItem user={auth.data?.user} />
                 </div>
-                {/* <DropdownMenuSeparator /> */}
+                <DropdownMenuSeparator />
                 {/* <DropdownMenuItem className="color-[var(--qu-text)]" onClick={() => { LogOut().then(() => { window.location.href = process.env.NEXT_PUBLIC_API_URL + "/auth/signin?redirectTo=" + window.location.href }) }}><LogOutIcon size={20} />Logout</DropdownMenuItem> */}
+
+                <DropdownMenuItem className="color-[var(--qu-text)]" onClick={() => { }}><SettingsIcon />Admin Center</DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
     );
