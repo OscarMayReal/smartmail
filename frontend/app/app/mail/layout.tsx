@@ -7,6 +7,7 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import { useState, useEffect, useContext, createContext } from "react";
 import { GlobalContext } from "../layout";
 import { folder, email } from "@/../server/generated/prisma/browser";
+import { useRouter, useParams } from "next/navigation";
 
 export const MailContext = createContext({
     folders: [] as folder[],
@@ -17,6 +18,8 @@ export const MailContext = createContext({
 
 export default function MailPage({ children }: { children: React.ReactNode }) {
     const { auth } = useContext(GlobalContext)
+    const router = useRouter();
+    const params = useParams();
     const [folders, setFolders] = useState([] as folder[])
     const [messages, setMessages] = useState([] as email[])
     useEffect(() => {
@@ -36,7 +39,7 @@ export default function MailPage({ children }: { children: React.ReactNode }) {
             <div className="flex flex-row h-full w-full">
                 <div className="folder-sidebar">
                     <ButtonGroup className="w-full p-[10px]">
-                        <Button className="flex-1" variant="outline"><PenIcon /> Compose</Button>
+                        <Button onClick={() => { router.push(`/app/mail/mailbox/${params.id}/compose`) }} className="flex-1" variant="outline"><PenIcon /> Compose</Button>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline"><ChevronDownIcon /></Button>

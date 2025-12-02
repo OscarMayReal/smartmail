@@ -7,7 +7,7 @@ import { MailContext } from "../../layout";
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { SparklesIcon } from "lucide-react";
 export default function MailboxLayout({ children }: { children: React.ReactNode }) {
-    const { messages, setMessages } = useContext(MailContext)
+    const { messages, setMessages, folders } = useContext(MailContext)
     const { auth } = useContext(GlobalContext)
     const params = useParams()
     useEffect(() => {
@@ -25,7 +25,7 @@ export default function MailboxLayout({ children }: { children: React.ReactNode 
     return (
         <div className="flex flex-row h-full w-full">
             <div className="mailbox-sidebar">
-                <MailboxHeader title="Inbox" />
+                <MailboxHeader title={folders.find((folder) => folder.id == params.id)?.name || ""} />
                 {messages.length == 0 ? (
                     <Empty className="flex flex-col items-center justify-center h-full w-full gap-2">
                         <EmptyMedia variant="icon" >

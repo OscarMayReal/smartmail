@@ -90,10 +90,10 @@ export function MailItemHeader({ message }: { message: email }) {
             <div className="mail-header-title">{message.subject}</div>
             <div className="flex-1" />
             <ButtonGroup>
-                {folders.filter((folder) => folder.type == "smartmail.folder.trash")[0].id != params.id && <Button variant="outline" size="sm" onClick={() => {
+                {(folders.filter((folder) => folder.type == "smartmail.folder.trash")[0] || {}).id != params.id && <Button variant="outline" size="sm" onClick={() => {
                     moveEmailInteractive({ messageId: message.id, messages, router, params, setMessages, folder: folders.filter((folder) => folder.type == "smartmail.folder.trash")[0], auth })
                 }}><Trash2Icon />Delete</Button>}
-                {folders.filter((folder) => folder.type == "smartmail.folder.archive")[0].id != params.id && <Button variant="outline" size="sm" onClick={() => {
+                {(folders.filter((folder) => folder.type == "smartmail.folder.archive")[0] || {}).id != params.id && <Button variant="outline" size="sm" onClick={() => {
                     moveEmailInteractive({ messageId: message.id, messages, router, params, setMessages, folder: folders.filter((folder) => folder.type == "smartmail.folder.archive")[0], auth })
                 }}><ArchiveIcon /> Archive</Button>}
                 {/* <Button variant="outline" size="sm"><FolderInputIcon /> Move</Button> */}
