@@ -1,27 +1,56 @@
+"use client";
 import { FolderSidebarGroup } from "@/components/components/folder";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Button } from "@/components/ui/button";
 import { ChevronDownIcon, FolderIcon, PenIcon, TagIcon } from "lucide-react";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useState, useEffect, useContext, createContext } from "react";
+import { GlobalContext } from "../layout";
+import { folder, email } from "@/../server/generated/prisma/browser";
+
+export const MailContext = createContext({
+    folders: [] as folder[],
+    messages: [] as email[],
+    setFolders: (folders: any) => { },
+    setMessages: (messages: any) => { }
+})
+
 export default function MailPage({ children }: { children: React.ReactNode }) {
+    const { auth } = useContext(GlobalContext)
+    const [folders, setFolders] = useState([] as folder[])
+    const [messages, setMessages] = useState([] as email[])
+    useEffect(() => {
+        if (!auth.data?.sessionId) return
+        fetch("/api/mail/folders", {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${auth.data.sessionId}`
+            }
+        }).then(res => res.json()).then(data => {
+            setFolders(data)
+        })
+    }, [auth])
     return (
-        <div className="flex flex-row h-full w-full">
-            <div className="folder-sidebar">
-                <ButtonGroup className="w-full p-[10px]">
-                    <Button className="flex-1" variant="outline"><PenIcon /> Compose</Button>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline"><ChevronDownIcon /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem><FolderIcon />Folder</DropdownMenuItem>
-                            <DropdownMenuItem><TagIcon />Label</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </ButtonGroup>
-                <FolderSidebarGroup folders={[{ name: "Inbox", type: "smartmail.folder.inbox", id: 0, unreadCount: 10 }, { name: "Sent", type: "smartmail.folder.sent", id: 1, unreadCount: 0 }, { name: "Drafts", type: "smartmail.folder.drafts", id: 2, unreadCount: 0 }, { name: "Trash", type: "smartmail.folder.trash", id: 3, unreadCount: 0 }]} title="Folders" />
+        <MailContext.Provider value={{ folders, messages, setFolders, setMessages }}>
+            <div className="flex flex-row h-full w-full">
+                <div className="folder-sidebar">
+                    <ButtonGroup className="w-full p-[10px]">
+                        <Button className="flex-1" variant="outline"><PenIcon /> Compose</Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline"><ChevronDownIcon /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem><FolderIcon />Folder</DropdownMenuItem>
+                                <DropdownMenuItem><TagIcon />Label</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </ButtonGroup>
+                    <FolderSidebarGroup folders={folders} title="Folders" />
+                </div>
+                {children}
             </div>
-            {children}
-        </div>
+        </MailContext.Provider>
     );
 }

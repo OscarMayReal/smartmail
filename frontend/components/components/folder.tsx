@@ -2,8 +2,9 @@
 import { InboxIcon, FolderIcon, SendIcon, PencilIcon, Trash2Icon } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { Badge } from "../ui/badge";
+import { folder } from "@/../server/generated/prisma/browser";
 
-export function FolderSidebarItem({ folder }: { folder: any }) {
+export function FolderSidebarItem({ folder }: { folder: folder }) {
     const router = useRouter();
     const path = usePathname();
     var Icon = FolderIcon
@@ -26,12 +27,12 @@ export function FolderSidebarItem({ folder }: { folder: any }) {
             <Icon size="20" />
             <div className="folder-sidebar-item-text">{folder.name}</div>
             <div className="flex-1" />
-            {folder.unreadCount > 0 && <Badge variant="outline" className="text-[var(--qu-text)] bg-[var(--qu-header-background)]">{folder.unreadCount}</Badge>}
+            {/* {folder.unreadCount > 0 && <Badge variant="outline" className="text-[var(--qu-text)] bg-[var(--qu-header-background)]">{folder.unreadCount}</Badge>} */}
         </div>
     );
 }
 
-export function FolderSidebarGroup({ folders, title }: { folders: any[], title: string }) {
+export function FolderSidebarGroup({ folders, title }: { folders: folder[], title: string }) {
     return (
         <div className="folder-sidebar-group">
             <div className="folder-sidebar-group-title">{title}</div>
