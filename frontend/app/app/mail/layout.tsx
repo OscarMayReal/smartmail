@@ -19,7 +19,7 @@ export default function MailPage({ children }: { children: React.ReactNode }) {
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </ButtonGroup>
-                <FolderSidebarGroup folders={[{ name: "Inbox", type: "smartmail.folder.inbox", id: 0 }, { name: "Sent", type: "smartmail.folder.sent", id: 1 }, { name: "Drafts", type: "smartmail.folder.drafts", id: 2 }, { name: "Trash", type: "smartmail.folder.trash", id: 3 }]} title="Folders" />
+                <FolderSidebarGroup folders={[{ name: "Inbox", type: "smartmail.folder.inbox", id: 0, unreadCount: 10 }, { name: "Sent", type: "smartmail.folder.sent", id: 1, unreadCount: 0 }, { name: "Drafts", type: "smartmail.folder.drafts", id: 2, unreadCount: 0 }, { name: "Trash", type: "smartmail.folder.trash", id: 3, unreadCount: 0 }]} title="Folders" />
             </div>
             {children}
         </div>

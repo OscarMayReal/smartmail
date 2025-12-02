@@ -13,8 +13,10 @@ import { DropdownMenuGroup } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "../ui/input-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { useContext } from "react";
+import { GlobalContext } from "@/app/app/layout";
 
-export const Header = ({ title, auth }: { title: string, auth: any }) => {
+export const Header = ({ auth }: { auth: any }) => {
     const router = useRouter();
     const size = useWindowSize();
     const [open, setOpen] = useState(false);
@@ -30,6 +32,7 @@ export const Header = ({ title, auth }: { title: string, auth: any }) => {
     if (auth.data?.tenant?.type == "Team" && !path.startsWith("/account")) {
         router.push("/account");
     }
+    const { settingsOpen, setSettingsOpen } = useContext(GlobalContext);
     return (
         <header>
             {/* {tenant.data?.tenant?.type === "Organization" ? <Launcher /> : null} */}
@@ -37,7 +40,7 @@ export const Header = ({ title, auth }: { title: string, auth: any }) => {
             {/* <SidebarDrawer open={open} onOpenChange={setOpen} /> */}
             {auth.data?.tenant?.logo ? <><img src={auth.data?.tenant?.logo} className="header-logo" /><div className="header-logo-divider" /></> : null}
             <div style={{ width: "15px" }} />
-            <div className="header-title">{title}</div>
+            <div className="header-title">{path.startsWith("/app/mail") ? "Mail" : path.startsWith("/app/calendar") ? "Calendar" : path.startsWith("/app/contacts") ? "Contacts" : path.startsWith("/app/tasks") ? "Tasks" : "Home"}</div>
             <div style={{ flex: 1 }}>
                 <div style={{ width: "350px", position: "absolute", left: "310px", transform: "translateY(-50%)", top: "50%" }}>
                     <SearchBox />
@@ -45,7 +48,7 @@ export const Header = ({ title, auth }: { title: string, auth: any }) => {
             </div>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size={"icon-sm"} className="mr-2" onClick={() => { setOpen(true) }}><BellIcon /></Button>
+                    <Button variant="ghost" size={"icon-sm"} className="mr-1" onClick={() => { setOpen(true) }}><BellIcon /></Button>
                 </TooltipTrigger>
                 <TooltipContent style={{ backgroundColor: "black", color: "white" }}>
                     Notifications
@@ -53,7 +56,7 @@ export const Header = ({ title, auth }: { title: string, auth: any }) => {
             </Tooltip>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size={"icon-sm"} className="mr-2" onClick={() => { setOpen(true) }}><SettingsIcon /></Button>
+                    <Button variant="ghost" size={"icon-sm"} className="mr-2" onClick={() => { setSettingsOpen(true) }}><SettingsIcon /></Button>
                 </TooltipTrigger>
                 <TooltipContent style={{ backgroundColor: "black", color: "white" }}>
                     Settings

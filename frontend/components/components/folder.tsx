@@ -1,6 +1,7 @@
 "use client";
 import { InboxIcon, FolderIcon, SendIcon, PencilIcon, Trash2Icon } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
+import { Badge } from "../ui/badge";
 
 export function FolderSidebarItem({ folder }: { folder: any }) {
     const router = useRouter();
@@ -24,6 +25,8 @@ export function FolderSidebarItem({ folder }: { folder: any }) {
         <div className={`folder-sidebar-item ${path.startsWith(`/app/mail/mailbox/${folder.id}`) ? "active" : ""}`} onClick={() => { router.push(`/app/mail/mailbox/${folder.id}`) }}>
             <Icon size="20" />
             <div className="folder-sidebar-item-text">{folder.name}</div>
+            <div className="flex-1" />
+            {folder.unreadCount > 0 && <Badge variant="outline" className="text-[var(--qu-text)] bg-[var(--qu-header-background)]">{folder.unreadCount}</Badge>}
         </div>
     );
 }
