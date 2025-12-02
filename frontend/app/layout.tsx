@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Figtree, Geist_Mono } from "next/font/google";
+import { Figtree, DM_Mono } from "next/font/google";
 import "./globals.css";
 import "./qui-colors.css";
 import "./qui-shell.css";
@@ -10,9 +10,9 @@ const figtree = Figtree({
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const dmMono = DM_Mono({
+  variable: "--font-dm-mono",
+  weight: ["300", "400", "500"],
 });
 
 export const metadata: Metadata = {
@@ -28,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${figtree.variable} ${geistMono.variable} antialiased`}
+        className={`${figtree.variable} ${dmMono.variable} antialiased`}
       >
         {children}
       </body>

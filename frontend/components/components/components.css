@@ -88,6 +88,9 @@
 .mail-item-content {
     display: flex;
     flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .mail-item-title {
@@ -98,6 +101,12 @@
 .mail-item-subtitle {
     font-size: 14px;
     color: var(--qu-text-secondary);
+    overflow: hidden;
+    white-space: nowrap;
+    width: 100%;
+    max-width: 100%;
+    text-overflow: ellipsis;
+    min-width: 0;
 }
 
 .mail-header {
@@ -157,4 +166,32 @@
     gap: 6px;
     flex-direction: row;
     align-items: center;
+}
+
+.mail-page-main {
+    height: 100%;
+    overflow-y: scroll;
+}
+
+.tiptap {
+    outline: none !important;
+    border: none !important;
+}
+
+pre>code {
+    background-color: rgb(49, 49, 49);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 8px;
+    display: block;
+}
+
+ul {
+    padding-left: 20px;
+    list-style-type: disc;
+}
+
+ol {
+    padding-left: 20px;
+    list-style-type: decimal;
 }

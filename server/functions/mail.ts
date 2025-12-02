@@ -24,6 +24,14 @@ export async function getMailAccountMessages(folderId: string) {
     })
 }
 
+export function getEmailById(id: string) {
+    return prisma.email.findUnique({
+        where: {
+            id
+        }
+    })
+}
+
 export async function receiveEmail({ accountId, email }: { accountId: string, email: any }) {
     var account = await prisma.emailaccount.findUnique({
         where: {
