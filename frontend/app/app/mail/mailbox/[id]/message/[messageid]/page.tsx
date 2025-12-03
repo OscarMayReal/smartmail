@@ -1,5 +1,5 @@
 "use client";
-import { MailItemHeader, MailItemFooter, SentfromHeader } from "@/components/components/mail";
+import { MailItemHeader, MailItemFooter, SentfromHeader, MoveSelectedMessagesDropdown } from "@/components/components/mail";
 import { useState, useRef } from "react";
 import { ReplyComposer } from "@/components/components/mail";
 import { email } from "@/../server/generated/prisma/browser";
@@ -7,11 +7,17 @@ import { useContext } from "react";
 import { GlobalContext } from "@/app/app/layout";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
+import { Empty, EmptyContent, EmptyDescription, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { FolderInputIcon, MailboxIcon, Trash2Icon, XIcon } from "lucide-react";
+import { MailContext } from "@/app/app/mail/layout";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 export default function MailMessagePage() {
     const [replyMode, setReplyMode] = useState<"reply" | "forward" | null>(null);
     const [message, setMessage] = useState<email | null>(null);
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const { auth } = useContext(GlobalContext)
+    const { setMessages, messages } = useContext(MailContext)
     const params = useParams()
 
     useEffect(() => {
@@ -75,6 +81,26 @@ export default function MailMessagePage() {
     }, [message]);
 
     if (!message) return null
+    if (messages.filter((message) => message.selected).length > 1) {
+        return (
+            <div className="flex flex-col h-full w-full">
+                <Empty className="flex flex-col h-full w-full gap-2">
+                    <EmptyMedia>
+                        <MailboxIcon />
+                    </EmptyMedia>
+                    <EmptyTitle>
+                        {messages.filter((message) => message.selected).length} Messages Selected
+                    </EmptyTitle>
+                    <EmptyContent className="flex flex-col gap-1">
+                        <Button size="sm" variant="ghost" onClick={() => {
+                            setMessages(messages.map((message) => { message.selected = false; return message }))
+                        }}><XIcon />Deselect</Button>
+                        <MoveSelectedMessagesDropdown />
+                    </EmptyContent>
+                </Empty>
+            </div>
+        );
+    }
     return (
         <div className="flex flex-col h-full w-full">
             <MailItemHeader message={message!} />

@@ -80,15 +80,15 @@ const TableRowWithDrawer = ({ row }: { row: Row<any> }) => {
                     </TableCell>
                 ))}
             </TableRow>
-            <MailAccountDrawer open={open} setOpen={setOpen} app={row.original} />
+            <MailAccountDrawer open={open} setOpen={setOpen} account={row.original} />
         </>
     );
 }
 
-function MailAccountDrawer({ open, setOpen, app }: { open: boolean, setOpen: (open: boolean) => void, app: any }) {
-    const [userAppAccess, setUserAppAccess] = useState<any>(app.userAppAccess);
+function MailAccountDrawer({ open, setOpen, account }: { open: boolean, setOpen: (open: boolean) => void, account: emailaccount }) {
+    const [accountData, setAccountData] = useState<any>(account);
     useEffect(() => {
-        setUserAppAccess(app.userAppAccess);
+        setAccountData(account);
     }, [open]);
     return (
         <Drawer handleOnly direction="right" open={open} onOpenChange={setOpen} onClose={() => {
@@ -100,8 +100,8 @@ function MailAccountDrawer({ open, setOpen, app }: { open: boolean, setOpen: (op
         }}>
             <DrawerContent>
                 <DrawerHeader>
-                    <DrawerTitle>{app.name}</DrawerTitle>
-                    <DrawerDescription>Manage this app</DrawerDescription>
+                    <DrawerTitle>{accountData.address}</DrawerTitle>
+                    <DrawerDescription>Manage this email account</DrawerDescription>
                 </DrawerHeader>
                 <Separator />
                 <div className="drawer-mainarea">
@@ -109,7 +109,7 @@ function MailAccountDrawer({ open, setOpen, app }: { open: boolean, setOpen: (op
                 </div>
                 <Separator />
                 <DrawerFooter style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-end" }}>
-                    <DrawerClose><Button><XIcon size={20} />Close</Button></DrawerClose>
+                    <DrawerClose asChild><Button variant="outline"><XIcon size={20} />Close</Button></DrawerClose>
                 </DrawerFooter>
             </DrawerContent>
         </Drawer>

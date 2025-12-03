@@ -6,6 +6,7 @@ import { GlobalContext } from "@/app/app/layout";
 import { MailContext } from "../../layout";
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { SparklesIcon } from "lucide-react";
+import { email } from "../../../../../../server/generated/prisma/browser";
 export default function MailboxLayout({ children }: { children: React.ReactNode }) {
     const { messages, setMessages, folders } = useContext(MailContext)
     const { auth } = useContext(GlobalContext)
@@ -19,7 +20,7 @@ export default function MailboxLayout({ children }: { children: React.ReactNode 
                 "Authorization": `Bearer ${auth.data.sessionId}`
             }
         }).then(res => res.json()).then(data => {
-            setMessages(data)
+            setMessages(data.map((message: email) => ({ ...message, selected: false })))
         })
     }, [auth, params.id])
     return (
@@ -36,7 +37,7 @@ export default function MailboxLayout({ children }: { children: React.ReactNode 
                     </Empty>
                 ) : (
                     <div className="mailbox-sidebar-items">
-                        {messages.map((message) => (
+                        {messages.map((message: email & { selected: boolean }) => (
                             <MailItem key={message.id} item={message} />
                         ))}
                     </div>

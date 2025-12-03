@@ -14,14 +14,14 @@ import { useContext } from "react";
 import { GlobalContext } from "@/app/app/layout";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { MailContext } from "@/app/app/mail/layout";
 import { toast } from "sonner";
 import { getTypeIcon } from "./folder";
 import { folder } from "../../../server/generated/prisma/browser";
 
-export async function moveEmailInteractive({ messageId, messages, router, params, setMessages, folder, auth }: { messageId: string, messages: email[], router: any, params: any, setMessages: (messages: email[]) => void, folder: folder, auth: any }) {
+export async function moveEmailInteractive({ messageId, messages, router, params, setMessages, folder, auth, moveToNext = true }: { messageId: string, messages: email[], router: any, params: any, setMessages: (messages: email[]) => void, folder: folder, auth: any, moveToNext?: boolean }) {
     await fetch(`/api/mail/messages/${messageId}/move`, {
         method: "POST",
         headers: {
@@ -38,22 +38,28 @@ export async function moveEmailInteractive({ messageId, messages, router, params
         },
     }).then((res) => res.json())
     const thisMessagePosition = messages.findIndex((message) => message.id === messageId)
-    if (thisMessagePosition < messages.length - 1) {
+    if (thisMessagePosition < messages.length - 1 && moveToNext) {
         router.push(`/app/mail/mailbox/${params.id}/message/${messages[thisMessagePosition + 1].id}`)
-    } else if (thisMessagePosition > 0) {
+    } else if (thisMessagePosition > 0 && moveToNext) {
         router.push(`/app/mail/mailbox/${params.id}/message/${messages[thisMessagePosition - 1].id}`)
+    } else if (moveToNext) {
+        router.push(`/app/mail/mailbox/${params.id}`)
     } else {
         router.push(`/app/mail/mailbox/${params.id}`)
     }
-    setMessages(newMessages)
+    setMessages(newMessages.map((message: email & { selected: boolean }) => ({ ...message, selected: false })))
     toast.success("Email moved to " + folder.name)
 }
 
-export function MailItem({ item }: { item: any }) {
+export function MailItem({ item }: { item: email & { selected: boolean } }) {
+    const { setMessages, messages } = useContext(MailContext)
     const router = useRouter();
     const params = useParams();
     return (
-        <div className={"mail-item" + (params.messageid == item.id ? " active" : "")} onClick={() => { router.push(`/app/mail/mailbox/${params.id}/message/${item.id}`) }}>
+        <div className={"mail-item" + (params.messageid == item.id || item.selected ? " active" : "")} onClick={() => { router.push(`/app/mail/mailbox/${params.id}/message/${item.id}`) }}>
+            <Checkbox checked={item.selected} onCheckedChange={(checked) => {
+                setMessages(messages.map((message) => { if (message.id == item.id) message.selected = checked; return message }))
+            }} />
             <Avatar style={{ width: "40px", height: "40px", border: "1px solid var(--qu-border-color)" }}>
                 <AvatarFallback className="text-[var(--qu-text)]">AB</AvatarFallback>
             </Avatar>
@@ -66,10 +72,13 @@ export function MailItem({ item }: { item: any }) {
 }
 
 export function MailboxHeader({ title }: { title: string }) {
+    const { setMessages, messages } = useContext(MailContext)
     return (
         <div className="mail-header">
-            <Checkbox />
-            <div className="mail-header-title">{title}</div>
+            <Checkbox checked={messages.every((message) => message.selected) && messages.length > 0} onCheckedChange={(checked) => {
+                setMessages(messages.map((message) => { message.selected = checked; return message }))
+            }} />
+            <div className="mail-header-title">{messages.some((message) => message.selected) ? messages.filter((message) => message.selected).length + " Selected" : title}</div>
             <div className="flex-1" />
             <div className="flex flex-row gap-2 items-center">
                 <div className="text-[var(--qu-text-secondary)]">Hide Read</div>
@@ -165,7 +174,34 @@ function MoveEmailDropdown({ messageId }: { messageId: string }) {
     );
 }
 
-function MoveEmailItem({ folder, messageId }: { folder: any, messageId: string }) {
+export function MoveSelectedMessagesDropdown() {
+    const { folders, messages } = useContext(MailContext)
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                    <FolderInputIcon className="mr-2 h-4 w-4" />
+                    Move to Folder
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="p-0">
+                <Command>
+                    <CommandInput placeholder="Search folders..." />
+                    <CommandList>
+                        <CommandEmpty>No folders found.</CommandEmpty>
+                        <CommandGroup>
+                            {folders.map((folder) => (
+                                <MoveEmailItem key={folder.id} folder={folder} messageId={messages.filter((message) => message.selected).map((message) => message.id)} />
+                            ))}
+                        </CommandGroup>
+                    </CommandList>
+                </Command>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
+function MoveEmailItem({ folder, messageId }: { folder: any, messageId: string | string[] }) {
     const { auth } = useContext(GlobalContext)
     const { setMessages, messages } = useContext(MailContext)
     const router = useRouter()
@@ -173,7 +209,13 @@ function MoveEmailItem({ folder, messageId }: { folder: any, messageId: string }
     var Icon = getTypeIcon(folder.type)
     return (
         <CommandItem disabled={folder.id == params.id} key={folder.id} onSelect={async () => {
-            moveEmailInteractive({ messageId, folderId: folder.id, messages, router, params, setMessages, folder, auth })
+            if (Array.isArray(messageId)) {
+                for (const mid of messageId) {
+                    moveEmailInteractive({ messageId: mid, messages, router, params, setMessages, folder, auth, moveToNext: false })
+                }
+            } else {
+                moveEmailInteractive({ messageId, messages, router, params, setMessages, folder, auth })
+            }
         }}>
             <Icon />
             {folder.name + (folder.id == params.id ? " (Current)" : "")}

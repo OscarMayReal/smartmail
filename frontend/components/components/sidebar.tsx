@@ -2,7 +2,8 @@ import { SidebarItem } from "@/components/qui/sidebar";
 import { BookUserIcon, CalendarIcon, CheckIcon, FolderIcon, HomeIcon, ListCheckIcon, ListChecksIcon, MailboxIcon, MailIcon, UsersIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { Separator } from "../ui/separator";
-
+import { useContext } from "react";
+import { GlobalContext } from "@/app/admin/layout";
 export function NavigationSidebar() {
     const path = usePathname();
     const router = useRouter();
@@ -19,8 +20,10 @@ export function NavigationSidebar() {
 export function AdminSidebar() {
     const path = usePathname();
     const router = useRouter();
+    const { auth } = useContext(GlobalContext);
     return (
         <div className="sidebar">
+            <div className="sidebar-tenant-name">{auth.data?.tenant?.displayName ? auth.data?.tenant?.displayName : auth.data?.tenant?.name}</div>
             <SidebarItem index={0} title="Home" onClick={() => { router.push("/admin") }} Icon={HomeIcon} active={path == "/admin"} />
             <Separator style={{ margin: "10px 0" }} />
             <div className="sidebar-section-title">Identities</div>

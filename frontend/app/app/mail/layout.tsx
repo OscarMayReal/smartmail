@@ -11,7 +11,7 @@ import { useRouter, useParams } from "next/navigation";
 
 export const MailContext = createContext({
     folders: [] as folder[],
-    messages: [] as email[],
+    messages: [] as (email & { selected: boolean })[],
     setFolders: (folders: any) => { },
     setMessages: (messages: any) => { }
 })
@@ -21,7 +21,7 @@ export default function MailPage({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const params = useParams();
     const [folders, setFolders] = useState([] as folder[])
-    const [messages, setMessages] = useState([] as email[])
+    const [messages, setMessages] = useState([] as (email & { selected: boolean })[])
     const [createFolderDialogOpen, setCreateFolderDialogOpen] = useState(false);
     useEffect(() => {
         if (!auth.data?.sessionId) return

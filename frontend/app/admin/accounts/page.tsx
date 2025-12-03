@@ -8,7 +8,7 @@ export default function AdminPage() {
     const { auth } = useContext(GlobalContext);
     const [accounts, setAccounts] = useState<emailaccount[]>([]);
     useEffect(() => {
-        if (!auth) return;
+        if (!auth.loaded || !auth.data) return;
         const fetchAccounts = async () => {
             const res = await fetch(`/api/admin/accounts`, {
                 headers: {
