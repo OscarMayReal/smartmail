@@ -2,7 +2,7 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { JSX, useEffect, useRef, useState } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ArrowLeftIcon, BellIcon, Building2Icon, ChevronDownIcon, LayoutGrid, LogInIcon, LogOutIcon, MenuIcon, SearchIcon, SettingsIcon, SparklesIcon, UserIcon, UsersIcon } from "lucide-react";
+import { ArrowLeftIcon, BellIcon, Building2Icon, ChevronDownIcon, CommandIcon, LayoutGrid, LogInIcon, LogOutIcon, MenuIcon, SearchIcon, SettingsIcon, SparklesIcon, TerminalIcon, UserIcon, UsersIcon } from "lucide-react";
 import { useWindowSize } from "@/lib/screensize";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 // import { AdminSidebar, TeamSidebar, UserSidebar } from "./sidebar";
@@ -15,6 +15,8 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from "../ui/input-group"
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { useContext } from "react";
 import { GlobalContext } from "@/app/app/layout";
+import { Launcher } from "./launcher";
+import { CommandPalette } from "./command";
 
 export const AdminHeader = ({ auth }: { auth: any }) => {
     const router = useRouter();
@@ -35,8 +37,8 @@ export const AdminHeader = ({ auth }: { auth: any }) => {
     const { settingsOpen, setSettingsOpen } = useContext(GlobalContext);
     return (
         <header>
-            {/* {tenant.data?.tenant?.type === "Organization" ? <Launcher /> : null} */}
-            {auth.data?.tenant?.logo && <div style={{ width: "10px" }} />}
+            {auth.data?.tenant?.type === "Organization" ? <Launcher authManual={auth} /> : null}
+            {/* {auth.data?.tenant?.logo && <div style={{ width: "10px" }} />} */}
             {/* <SidebarDrawer open={open} onOpenChange={setOpen} /> */}
             {auth.data?.tenant?.logo ? <><img src={auth.data?.tenant?.logo} className="header-logo" /><div className="header-logo-divider" /></> : null}
             <div style={{ width: "15px" }} />
@@ -70,14 +72,16 @@ export const Header = ({ auth }: { auth: any }) => {
     const { settingsOpen, setSettingsOpen } = useContext(GlobalContext);
     return (
         <header>
-            {/* {tenant.data?.tenant?.type === "Organization" ? <Launcher /> : null} */}
-            {auth.data?.tenant?.logo && <div style={{ width: "10px" }} />}
+            {/* {auth.data?.tenant?.type === "Organization" ? <Launcher /> : null} */}
+            <Launcher width={"60px"} />
+            <div style={{ width: "5px" }} />
+            {/* {auth.data?.tenant?.logo && <div style={{ width: "5px" }} />} */}
             {/* <SidebarDrawer open={open} onOpenChange={setOpen} /> */}
-            {auth.data?.tenant?.logo ? <><img src={auth.data?.tenant?.logo} className="header-logo" /><div className="header-logo-divider" /></> : null}
-            <div style={{ width: "15px" }} />
-            <div className="header-title">{path.startsWith("/app/mail") ? "Mail" : path.startsWith("/app/calendar") ? "Calendar" : path.startsWith("/app/contacts") ? "Contacts" : path.startsWith("/app/tasks") ? "Tasks" : "Home"}</div>
+            {/* {auth.data?.tenant?.logo ? <><img src={auth.data?.tenant?.logo} className="header-logo" /><div className="header-logo-divider" /></> : null} */}
+            {/* <div style={{ width: "15px" }} /> */}
+            <div className="header-title">Quntem {path.startsWith("/app/mail") ? "Mail" : path.startsWith("/app/calendar") ? "Calendar" : path.startsWith("/app/contacts") ? "Contacts" : path.startsWith("/app/tasks") ? "Tasks" : "Home"}</div>
             <div style={{ flex: 1 }}>
-                <div style={{ width: "350px", position: "absolute", left: "310px", transform: "translateY(-50%)", top: "50%" }}>
+                <div style={{ width: "390px", position: "absolute", left: "310px", transform: "translateY(-50%)", top: "50%" }}>
                     <SearchBox />
                 </div>
             </div>
@@ -103,13 +107,39 @@ export const Header = ({ auth }: { auth: any }) => {
 };
 
 function SearchBox() {
+    const [open, setOpen] = useState(false);
+    useEffect(() => {
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "k" && e.metaKey) {
+                setOpen(!open);
+            }
+        });
+        return () => {
+            window.removeEventListener("keydown", (e) => {
+                if (e.key === "k" && e.metaKey) {
+                    setOpen(!open);
+                }
+            });
+        };
+    }, []);
     return (
-        <InputGroup>
-            <InputGroupAddon>
-                <SearchIcon />
-            </InputGroupAddon>
-            <InputGroupInput placeholder="Search" />
-        </InputGroup>
+        <div className="flex items-center">
+            <InputGroup>
+                <InputGroupAddon>
+                    <SearchIcon />
+                </InputGroupAddon>
+                <InputGroupInput placeholder="Search" />
+            </InputGroup>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size={"icon-sm"} className="ml-2" onClick={() => { setOpen(!open) }}><TerminalIcon /></Button>
+                </TooltipTrigger>
+                <TooltipContent style={{ backgroundColor: "black", color: "white" }}>
+                    Open Command Palette
+                </TooltipContent>
+            </Tooltip>
+            <CommandPalette isOpen={open} onOpenChange={setOpen} />
+        </div>
     );
 }
 

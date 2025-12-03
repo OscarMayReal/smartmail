@@ -22,9 +22,9 @@ function SidebarUserItem({ auth }: { auth: any }) {
     );
 }
 
-export function SidebarItem({ title, onClick, Icon, active, index, variant }: { title: string, onClick: () => void, Icon: React.JSX.ElementType, active: boolean, index: number, variant?: "compact" }) {
+export function SidebarItem({ title, onClick, Icon, active, index, variant }: { title: string, onClick: () => void, Icon: React.JSX.ElementType, active: boolean, index: number, variant?: "compact" | "highlight-selected" }) {
     return (
-        <motion.div className={"sidebar-item" + (active ? " sidebar-item-active" : "")} onClick={onClick} initial={{ x: "-100%" }} animate={{ x: "0%" }} transition={{ duration: variant === "compact" ? 0.2 : 0.5, delay: index * 0.1 }} style={variant === "compact" ? { width: "40px", maxWidth: "40px" } : {}}>
+        <motion.div className={"sidebar-item" + (active ? " sidebar-item-active" : "") + (variant === "highlight-selected" && active ? " sidebar-item-highlight-selected" : "")} onClick={onClick} initial={{ x: "-100%" }} animate={{ x: "0%" }} transition={{ duration: variant === "compact" ? 0.2 : 0.5, delay: index * 0.1 }} style={variant === "compact" ? { width: "40px", maxWidth: "40px" } : {}}>
             {active && <motion.div
                 key={`tabbar-animated-` + index}
                 layoutId="tabbar-animated"
