@@ -26,6 +26,18 @@
     background-color: var(--qu-item-hover);
 }
 
+.folder-sidebar-item-dropdown-trigger {
+    opacity: 0;
+}
+
+.folder-sidebar-item-dropdown-trigger[data-state="open"] {
+    opacity: 1;
+}
+
+.folder-sidebar-item:hover>.folder-sidebar-item-dropdown-trigger {
+    opacity: 1;
+}
+
 .folder-sidebar-item.active {
     background-color: var(--qu-item-active);
     color: var(--qu-accent);
@@ -194,4 +206,8 @@ ul {
 ol {
     padding-left: 20px;
     list-style-type: decimal;
+}
+
+* {
+    user-select: none;
 }

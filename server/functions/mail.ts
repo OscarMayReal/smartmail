@@ -16,6 +16,20 @@ export async function getMailAccountFolders(accountId: string) {
     })
 }
 
+export async function CreateFolder({ accountId, name, type }: { accountId: string, name: string, type: string }) {
+    return await prisma.folder.create({
+        data: {
+            account: {
+                connect: {
+                    id: accountId
+                }
+            },
+            name,
+            type
+        }
+    })
+}
+
 export async function getMailAccountMessages(folderId: string) {
     return await prisma.email.findMany({
         where: {

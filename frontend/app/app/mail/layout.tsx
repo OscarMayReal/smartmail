@@ -1,5 +1,5 @@
 "use client";
-import { FolderSidebarGroup } from "@/components/components/folder";
+import { CreateFolderDialog, FolderSidebarGroup } from "@/components/components/folder";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Button } from "@/components/ui/button";
 import { ChevronDownIcon, FolderIcon, PenIcon, TagIcon } from "lucide-react";
@@ -22,6 +22,7 @@ export default function MailPage({ children }: { children: React.ReactNode }) {
     const params = useParams();
     const [folders, setFolders] = useState([] as folder[])
     const [messages, setMessages] = useState([] as email[])
+    const [createFolderDialogOpen, setCreateFolderDialogOpen] = useState(false);
     useEffect(() => {
         if (!auth.data?.sessionId) return
         fetch("/api/mail/folders", {
@@ -45,12 +46,13 @@ export default function MailPage({ children }: { children: React.ReactNode }) {
                                 <Button variant="outline"><ChevronDownIcon /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuItem><FolderIcon />Folder</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setCreateFolderDialogOpen(true)}><FolderIcon />Folder</DropdownMenuItem>
                                 <DropdownMenuItem><TagIcon />Label</DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </ButtonGroup>
                     <FolderSidebarGroup folders={folders} title="Folders" />
+                    <CreateFolderDialog isOpen={createFolderDialogOpen} onOpenChange={setCreateFolderDialogOpen} />
                 </div>
                 {children}
             </div>

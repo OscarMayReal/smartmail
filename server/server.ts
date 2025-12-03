@@ -1,13 +1,15 @@
 import express from "express";
 import { verifySessionMiddleware } from "./middleware.ts";
 import "dotenv/config";
-import { getEmailById, getMailAccountFolders, getMailAccountMessages, moveEmail } from "./functions/mail.ts";
+import { CreateFolder, getEmailById, getMailAccountFolders, getMailAccountMessages, moveEmail } from "./functions/mail.ts";
 import { getAccountByAddress, getAccountsByUserId } from "./functions/mailaccounts.ts";
 import { receiveEmail } from "./functions/mail.ts";
+import { CreateTenantMailAccount, ListTenantMailAccounts } from "./functions/admin.ts";
 
 const app = express();
 
 app.use("/mail", verifySessionMiddleware({ appId: process.env.APP_ID!, keystoneUrl: process.env.KEYSTONE_URL!, appSecret: process.env.APP_SECRET! }));
+app.use("/admin", verifySessionMiddleware({ appId: process.env.APP_ID!, keystoneUrl: process.env.KEYSTONE_URL!, appSecret: process.env.APP_SECRET! }));
 app.use(express.json());
 
 app.get("/mail/folders", async (req, res) => {
@@ -32,6 +34,13 @@ app.post("/mail/messages/:messageId/move", async (req, res) => {
     res.json(message);
 });
 
+app.post("/mail/folders", async (req, res) => {
+    const accounts = await getAccountsByUserId(req.sessionData.userId);
+    const folder = await CreateFolder({ accountId: accounts[0].id, name: req.body.name, type: "smartmail.folder.custom" });
+    const folders = await getMailAccountFolders(accounts[0].id);
+    res.json(folders);
+});
+
 app.post("/externalmail/receive", async (req, res) => {
     console.log("Received email");
     const { address, email } = req.body;
@@ -42,6 +51,17 @@ app.post("/externalmail/receive", async (req, res) => {
     }
     await receiveEmail({ accountId: account.id, email });
     res.json({ success: true });
+});
+
+app.get("/admin/accounts", async (req, res) => {
+    const accounts = await ListTenantMailAccounts(req.sessionData.tenantId);
+    res.json(accounts);
+});
+
+app.post("/admin/accounts", async (req, res) => {
+    const { tenantId, userId, address, domainId, color } = req.body;
+    const account = await CreateTenantMailAccount(tenantId, userId, address, domainId, color);
+    res.json(account);
 });
 
 app.listen(process.env.PORT || 3000, () => {
