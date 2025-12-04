@@ -74,7 +74,7 @@ export const Header = ({ auth }: { auth: any }) => {
         <header>
             {/* {auth.data?.tenant?.type === "Organization" ? <Launcher /> : null} */}
             <Launcher width={"60px"} />
-            <div style={{ width: "5px" }} />
+            {/* <div style={{ width: "5px" }} /> */}
             {/* {auth.data?.tenant?.logo && <div style={{ width: "5px" }} />} */}
             {/* <SidebarDrawer open={open} onOpenChange={setOpen} /> */}
             {/* {auth.data?.tenant?.logo ? <><img src={auth.data?.tenant?.logo} className="header-logo" /><div className="header-logo-divider" /></> : null} */}

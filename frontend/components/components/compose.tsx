@@ -3,12 +3,12 @@ import { Button } from "../ui/button";
 import { BoldIcon, Code2Icon, CodeIcon, ItalicIcon, ListIcon, ListOrderedIcon, QuoteIcon, RedoIcon, SendIcon, StrikethroughIcon, UndoIcon, XIcon, UserIcon } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { TagInput, Tag } from "emblor-maintained";
-import { useState } from "react";
+import { useState, Dispatch, SetStateAction } from "react";
 import { Input } from "../ui/input";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Separator } from "../ui/separator";
-export function ComposeHeader() {
+export function ComposeHeader({ onSend }: { onSend: () => void }) {
     const router = useRouter()
     const params = useParams()
     return (
@@ -16,13 +16,12 @@ export function ComposeHeader() {
             <XIcon size="20" onClick={() => { router.push("/app/mail/mailbox/" + params.id) }} />
             <div className="mail-header-title">Compose</div>
             <div className="flex-1" />
-            <Button variant="outline" size="sm"><SendIcon />Send</Button>
+            <Button variant="outline" size="sm" onClick={onSend} ><SendIcon />Send</Button>
         </div>
     );
 }
 
-export function RecepientsInput() {
-    const [tags, setTags] = useState<Tag[]>([]);
+export function RecepientsInput({ tags, setTags, subject, setSubject }: { tags: Tag[], setTags: Dispatch<SetStateAction<Tag[]>>, subject: string, setSubject: Dispatch<SetStateAction<string>> }) {
     const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null);
     return (
         <div className="flex flex-col gap-2">
@@ -43,7 +42,8 @@ export function RecepientsInput() {
                             border: "none",
                             padding: "0",
                             borderRadius: "0",
-                            paddingLeft: "10px"
+                            paddingLeft: "10px",
+                            boxShadow: "none"
                         }
                     }}
                     styleClasses={{
@@ -55,7 +55,7 @@ export function RecepientsInput() {
                 />
             </div>
             <div className="flex flex-row gap-2 items-center">
-                <Input placeholder="Subject" className="bg-[var(--qu-header-background)]" />
+                <Input placeholder="Subject" className="bg-[var(--qu-header-background)]" value={subject} onChange={(e) => setSubject(e.target.value)} />
             </div>
         </div>
     );
@@ -67,7 +67,10 @@ export function ComposerEditor({ text, setText }: { text: string, setText: (text
             StarterKit
         ],
         content: text,
-        immediatelyRender: false
+        immediatelyRender: false,
+        onTransaction: (transaction) => {
+            setText(editor?.getHTML() ?? "");
+        }
     })
     const editorState = useEditorState({
         editor,
@@ -118,9 +121,6 @@ export function ComposerEditor({ text, setText }: { text: string, setText: (text
                 <Button variant={editorState?.isCodeBlock ? "default" : "ghost"} size="icon-sm" onClick={() => { editor?.chain().toggleCodeBlock().run(); editor?.chain().focus().run() }}><Code2Icon /></Button>
                 <Button variant={editorState?.isBlockquote ? "default" : "ghost"} size="icon-sm" onClick={() => { editor?.chain().toggleBlockquote().run(); editor?.chain().focus().run() }}><QuoteIcon /></Button>
                 <div className="flex-1" />
-                <Separator orientation="vertical" />
-                <Button variant="ghost" size="icon-sm" onClick={() => { setReplyMode(null) }}><XIcon /></Button>
-                <Button variant="default" size="icon-sm"><SendIcon /></Button>
             </div>
             <EditorContent className="reply-composer-content p-3" editor={editor} />
         </div>

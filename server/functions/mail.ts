@@ -93,3 +93,55 @@ export async function receiveEmail({ accountId, email }: { accountId: string, em
         }
     })
 }
+
+export async function sendEmail({ accountId, email, user }: { accountId: string, email: any, user: any }) {
+    console.log(email);
+    var account = await prisma.emailaccount.findUnique({
+        where: {
+            id: accountId
+        }
+    })
+    if (!account) {
+        //console.log("Account not found");
+        return;
+    }
+    email.from = '"' + user.name + '" <' + account.address + '>';
+    fetch(process.env.MAILSERVER_URL + "/api/mail/send", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "accept": "application/json",
+            "Authorization": "Bearer " + process.env.EMAIL_RECIEVE_SECRET
+        },
+        body: JSON.stringify(email)
+    }).then((res) => res.json()).then(async (data) => {
+        var mailbox = await prisma.folder.findFirst({
+            where: {
+                accountId: accountId,
+                type: "smartmail.folder.sent"
+            }
+        })
+        if (!mailbox) {
+            //console.log("Mailbox not found");
+            return;
+        }
+        data.results.forEach(async (result: any) => {
+            var emailobject = await prisma.email.create({
+                data: {
+                    accountId: accountId,
+                    emailid: result.result.result.messageId,
+                    from: account.address,
+                    name: user.name,
+                    to: result.result.result.to.value[0].address,
+                    subject: result.result.result.subject,
+                    email: result.result.result,
+                    date: new Date(result.result.result.date),
+                    folderId: mailbox.id,
+                    inReplyTo: null,
+                    unseen: false
+                }
+            })
+        })
+        return data;
+    });
+}

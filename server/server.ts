@@ -1,7 +1,7 @@
 import express from "express";
 import { verifySessionMiddleware } from "./middleware.ts";
 import "dotenv/config";
-import { CreateFolder, getEmailById, getMailAccountFolders, getMailAccountMessages, moveEmail } from "./functions/mail.ts";
+import { CreateFolder, getEmailById, getMailAccountFolders, getMailAccountMessages, moveEmail, sendEmail } from "./functions/mail.ts";
 import { getAccountByAddress, getAccountsByUserId } from "./functions/mailaccounts.ts";
 import { receiveEmail } from "./functions/mail.ts";
 import { CreateTenantMailAccount, ListTenantMailAccounts } from "./functions/admin.ts";
@@ -39,6 +39,14 @@ app.post("/mail/folders", async (req, res) => {
     const folder = await CreateFolder({ accountId: accounts[0].id, name: req.body.name, type: "smartmail.folder.custom" });
     const folders = await getMailAccountFolders(accounts[0].id);
     res.json(folders);
+});
+
+app.post("/mail/send", async (req, res) => {
+    console.log("Sending email");
+    const accounts = await getAccountsByUserId(req.sessionData.userId);
+    const { email } = req.body;
+    await sendEmail({ accountId: accounts[0].id, email, user: req.sessionData.user });
+    res.json({ success: true });
 });
 
 app.post("/externalmail/receive", async (req, res) => {

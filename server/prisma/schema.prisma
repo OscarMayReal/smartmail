@@ -15,16 +15,17 @@ datasource db {
 }
 
 model emailaccount {
-  id             String   @id @unique @default(uuid())
+  id             String    @id @unique @default(uuid())
   organizationId String?
   userId         String
-  createdAt      DateTime @default(now())
-  accessedAt     DateTime @default(now())
-  address        String   @unique
+  createdAt      DateTime  @default(now())
+  accessedAt     DateTime  @default(now())
+  address        String    @unique
   domainId       String?
   emails         email[]
   folders        folder[]
-  color          String   @default("default")
+  color          String    @default("default")
+  contacts       contact[]
 }
 
 model folder {
@@ -54,4 +55,12 @@ model email {
   account   emailaccount @relation(fields: [accountId], references: [id])
   folder    folder       @relation(fields: [folderId], references: [id])
   emailid   String
+}
+
+model contact {
+  id        String       @id @unique @default(uuid())
+  name      String
+  info      Json
+  accountId String
+  account   emailaccount @relation(fields: [accountId], references: [id])
 }
