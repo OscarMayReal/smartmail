@@ -105,3 +105,11 @@ export async function getAccountByAddress(address: string) {
         }
     })
 }
+
+export async function deleteMailAccount(id: string) {
+    await prisma.emailaccount.delete({
+        where: {
+            id
+        }
+    })
+}

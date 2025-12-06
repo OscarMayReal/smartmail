@@ -2,7 +2,7 @@ import express from "express";
 import { verifySessionMiddleware } from "./middleware.ts";
 import "dotenv/config";
 import { CreateFolder, getEmailById, getMailAccountFolders, getMailAccountMessages, moveEmail, sendEmail } from "./functions/mail.ts";
-import { getAccountByAddress, getAccountsByUserId } from "./functions/mailaccounts.ts";
+import { deleteMailAccount, getAccountByAddress, getAccountsByUserId } from "./functions/mailaccounts.ts";
 import { receiveEmail } from "./functions/mail.ts";
 import { CreateTenantMailAccount, ListTenantMailAccounts } from "./functions/admin.ts";
 
@@ -70,6 +70,11 @@ app.post("/admin/accounts", async (req, res) => {
     const { userId, address, domainId, color } = req.body;
     const account = await CreateTenantMailAccount(req.sessionData.tenantId!, userId, address, domainId, color);
     res.json(account);
+});
+
+app.delete("/admin/accounts/:id", async (req, res) => {
+    const account = await deleteMailAccount(req.params.id);
+    res.json({ success: true });
 });
 
 app.listen(process.env.PORT || 3000, () => {

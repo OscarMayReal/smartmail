@@ -37,7 +37,7 @@ model folder {
   domainId       String?
   createdAt      DateTime     @default(now())
   emails         email[]
-  account        emailaccount @relation(fields: [accountId], references: [id])
+  account        emailaccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }
 
 model email {
@@ -52,8 +52,8 @@ model email {
   name      String?
   unseen    Boolean      @default(false)
   email     Json
-  account   emailaccount @relation(fields: [accountId], references: [id])
-  folder    folder       @relation(fields: [folderId], references: [id])
+  account   emailaccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  folder    folder       @relation(fields: [folderId], references: [id], onDelete: Cascade)
   emailid   String
 }
 
@@ -62,5 +62,5 @@ model contact {
   name      String
   info      Json
   accountId String
-  account   emailaccount @relation(fields: [accountId], references: [id])
+  account   emailaccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }

@@ -22,11 +22,13 @@ import {
 } from "@/components/ui/drawer"
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { CheckIcon, PlusIcon, SaveIcon, SearchIcon, XIcon } from "lucide-react";
+import { CheckIcon, PlusIcon, SaveIcon, SearchIcon, TrashIcon, XIcon } from "lucide-react";
 import { InputField, PrefixedInput, SelectField, SuffixedInput, SwitchInput } from "@/components/qui/fields";
 import { emailaccount } from "../../../server/generated/prisma/browser";
 import { useContext } from "react";
 import { GlobalContext } from "@/app/admin/layout";
+import { ConfirmDialog } from "../qui/confirmDialog";
+import { setTimeout } from "timers";
 
 export function MailAccountTable({ accounts, onReload }: { accounts: emailaccount[], onReload: () => void }) {
     const { resources } = useContext(GlobalContext);
@@ -72,7 +74,7 @@ export function MailAccountTable({ accounts, onReload }: { accounts: emailaccoun
                 </TableHeader>
                 <TableBody>
                     {table.getRowModel().rows.map((row) => (
-                        <TableRowWithDrawer key={row.id} row={row} />
+                        <TableRowWithDrawer key={row.id} row={row} onReload={onReload} />
                     ))}
                 </TableBody>
             </Table>
@@ -80,7 +82,7 @@ export function MailAccountTable({ accounts, onReload }: { accounts: emailaccoun
     );
 }
 
-const TableRowWithDrawer = ({ row }: { row: Row<any> }) => {
+const TableRowWithDrawer = ({ row, onReload }: { row: Row<any>, onReload: () => void }) => {
     const [open, setOpen] = useState(false);
     return (
         <>
@@ -91,13 +93,15 @@ const TableRowWithDrawer = ({ row }: { row: Row<any> }) => {
                     </TableCell>
                 ))}
             </TableRow>
-            <MailAccountDrawer open={open} setOpen={setOpen} account={row.original} />
+            <MailAccountDrawer open={open} setOpen={setOpen} account={row.original} onReload={onReload} />
         </>
     );
 }
 
-function MailAccountDrawer({ open, setOpen, account }: { open: boolean, setOpen: (open: boolean) => void, account: emailaccount }) {
+function MailAccountDrawer({ open, setOpen, account, onReload }: { open: boolean, setOpen: (open: boolean) => void, account: emailaccount, onReload: () => void }) {
+    const { resources, auth } = useContext(GlobalContext);
     const [accountData, setAccountData] = useState<any>(account);
+    const [deleteOpen, setDeleteOpen] = useState(false);
     useEffect(() => {
         setAccountData(account);
     }, [open]);
@@ -116,7 +120,29 @@ function MailAccountDrawer({ open, setOpen, account }: { open: boolean, setOpen:
                 </DrawerHeader>
                 <Separator />
                 <div className="drawer-mainarea">
-
+                    <div className="p-[20px]">
+                        <Button variant="destructive" className="w-full" onClick={() => {
+                            setDeleteOpen(true);
+                        }}><TrashIcon size={20} />Delete Mail Account</Button>
+                    </div>
+                    <ConfirmDialog isOpen={deleteOpen} variant="destructive" onClose={() => {
+                        setDeleteOpen(false);
+                    }} title="Delete Email Account" description="Are you sure you want to delete this email account? All data will be deleted and cannot be recovered." onConfirm={() => {
+                        fetch(`/api/admin/accounts/${accountData.id}`, {
+                            method: "DELETE",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${auth?.data?.sessionId}`,
+                            },
+                        });
+                        setDeleteOpen(false);
+                        setTimeout(() => {
+                            setOpen(false);
+                        }, 200);
+                        setTimeout(() => {
+                            onReload();
+                        }, 400);
+                    }} />
                 </div>
                 <Separator />
                 <DrawerFooter style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-end" }}>
