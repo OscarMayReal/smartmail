@@ -9,6 +9,7 @@ header {
     height: 51px;
     display: flex;
     align-items: center;
+    flex-shrink: 0;
     /* background-color: #444444;
     color: #ffffff; */
     background-color: #ffffff;

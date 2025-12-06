@@ -23,10 +23,13 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { CheckIcon, PlusIcon, SaveIcon, SearchIcon, XIcon } from "lucide-react";
-import { InputField, PrefixedInput, SwitchInput } from "@/components/qui/fields";
+import { InputField, PrefixedInput, SelectField, SuffixedInput, SwitchInput } from "@/components/qui/fields";
 import { emailaccount } from "../../../server/generated/prisma/browser";
+import { useContext } from "react";
+import { GlobalContext } from "@/app/admin/layout";
 
 export function MailAccountTable({ accounts, onReload }: { accounts: emailaccount[], onReload: () => void }) {
+    const { resources } = useContext(GlobalContext);
     const table = useReactTable({
         data: accounts,
         columns: [
@@ -35,12 +38,20 @@ export function MailAccountTable({ accounts, onReload }: { accounts: emailaccoun
                 accessorKey: "address",
             },
             {
-                header: "assigned to",
+                header: "Assigned to",
                 accessorKey: "userId",
+                cell: ({ row }) => {
+                    const user = resources?.data?.users?.find((user) => user.id == row.original.userId);
+                    return user?.tenant?.name + "/" + user?.username;
+                }
             },
             {
                 header: "Domain",
                 accessorKey: "domainId",
+                cell: ({ row }) => {
+                    const domain = resources?.data?.domains?.find((domain) => domain.id == row.original.domainId);
+                    return domain?.name;
+                }
             },
         ],
         getCoreRowModel: getCoreRowModel(),
@@ -116,34 +127,52 @@ function MailAccountDrawer({ open, setOpen, account }: { open: boolean, setOpen:
     );
 }
 
-export function AddAppDrawer({ open, setOpen, appsListHook }: { open: boolean, setOpen: (open: boolean) => void, appsListHook: any }) {
-    const [name, setName] = useState("");
-    const [description, setDescription] = useState("");
-    const [logo, setLogo] = useState("");
-    const [mainUrl, setMainUrl] = useState("");
+export function AddAccountDrawer({ open, setOpen, accounts, onReload }: { open: boolean, setOpen: (open: boolean) => void, accounts: emailaccount[], onReload: () => void }) {
+    const { resources, auth } = useContext(GlobalContext);
+    const [domain, setDomain] = useState("");
+    const [assignTo, setAssignTo] = useState("");
     return (
         <Drawer handleOnly direction="right" open={open} onOpenChange={setOpen}>
             <DrawerTrigger asChild>
-                <Button variant="outline"><PlusIcon size={20} />Add App</Button>
+                <Button variant="outline"><PlusIcon size={20} />Add Email Account</Button>
             </DrawerTrigger>
             <DrawerContent>
                 <DrawerHeader>
-                    <DrawerTitle style={{ color: "var(--qu-text)", fontWeight: "500" }}>Add App</DrawerTitle>
+                    <DrawerTitle style={{ color: "var(--qu-text)", fontWeight: "500" }}>Add Email Account</DrawerTitle>
                 </DrawerHeader>
                 <Separator />
                 <div className="drawer-mainarea">
-                    <InputField label="Logo URL" value={logo} setValue={setLogo} />
-                    <InputField label="Name" value={name} setValue={setName} />
-                    <InputField label="Description" value={description} setValue={setDescription} />
-                    <InputField label="Main URL" value={mainUrl} setValue={setMainUrl} />
+                    {resources?.data?.domains && resources?.data?.domains.length > 0 && <SelectField label="Domain" value={domain} setValue={setDomain} options={resources?.data?.domains?.map((domain) => ({ id: domain.id, name: domain.name, disabled: !domain.verified, description: domain.verified ? null : "Not Set MX Record or Not Verified" }))} />}
+                    {domain && <SelectField label="Assign to" value={assignTo} setValue={setAssignTo} options={resources?.data?.users?.map((user) => (user.domainId === domain ? {
+                        id: user.id,
+                        name: user.name,
+                        description: accounts.find((account) => account.userId === user.id) ? "Already Assigned" : user.tenant?.name + "/" + user.username,
+                        disabled: accounts.find((account) => account.userId === user.id)
+                    } : null))} />}
+                    {domain && assignTo && <>
+                        <SuffixedInput label="Address" extraText="currently, custom email addresses are not supported" value={resources?.data?.users?.find((user) => user.id === assignTo)?.email.split("@")[0]} disabled={true} suffix={"@" + resources?.data?.domains?.find((rdomain) => rdomain.id === domain)?.name} />
+                    </>}
                 </div>
                 <Separator />
                 <DrawerFooter style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-end" }}>
                     <Button variant="outline" onClick={() => setOpen(false)}><XIcon size={20} />Cancel</Button>
                     <Button onClick={async () => {
-                        await CreateApp({ name, description, logo, mainUrl });
+                        await fetch("/api/admin/accounts", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Accept": "application/json",
+                                "Authorization": "Bearer " + auth?.data?.sessionId
+                            },
+                            body: JSON.stringify({
+                                domainId: domain,
+                                userId: assignTo,
+                                address: resources?.data?.users?.find((user) => user.id === assignTo)?.email.split("@")[0] + "@" + resources?.data?.domains?.find((rdomain) => rdomain.id === domain)?.name,
+                                color: "default"
+                            })
+                        })
                         setOpen(false);
-                        appsListHook.reload();
+                        onReload();
                     }}><CheckIcon size={20} />Add</Button>
                 </DrawerFooter>
             </DrawerContent>

@@ -67,8 +67,8 @@ app.get("/admin/accounts", async (req, res) => {
 });
 
 app.post("/admin/accounts", async (req, res) => {
-    const { tenantId, userId, address, domainId, color } = req.body;
-    const account = await CreateTenantMailAccount(tenantId, userId, address, domainId, color);
+    const { userId, address, domainId, color } = req.body;
+    const account = await CreateTenantMailAccount(req.sessionData.tenantId!, userId, address, domainId, color);
     res.json(account);
 });
 

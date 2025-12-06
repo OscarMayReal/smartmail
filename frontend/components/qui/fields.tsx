@@ -106,14 +106,15 @@ export function SelectField({ label, value, setValue, options, noMargin }: { lab
 //     );
 // }
 
-export function SuffixedInput({ label, value, setValue, suffix, fitInput, pattern, style, type }: { label: string, value: string, setValue: (value: string) => void, suffix: string, fitInput?: boolean, pattern?: string, style?: React.CSSProperties, type?: HTMLInputTypeAttribute }) {
+export function SuffixedInput({ label, value, setValue, suffix, fitInput, pattern, style, type, disabled, extraText }: { label: string, value: string, setValue: (value: string) => void, suffix: string, fitInput?: boolean, pattern?: string, style?: React.CSSProperties, type?: HTMLInputTypeAttribute, disabled?: boolean, extraText?: string }) {
     return (
         <div style={{ padding: "20px 20px 0px 20px", ...style }}>
             <div style={{ fontSize: "14px", fontWeight: "500", marginBottom: "10px" }}>{label}</div>
             <div className="flex items-center border border-input rounded-md shadow-xs bg-background focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px] transition-[color,box-shadow] px-3 h-9 text-base">
-                <input autoCorrect="off" autoCapitalize="off" pattern={pattern} type={type} value={value} onChange={(e) => setValue(e.target.value)} className={"outline-none text-[14px]" + (fitInput ? "" : " w-full")} style={{ fieldSizing: "content" }} />
+                <input autoCorrect="off" autoCapitalize="off" disabled={disabled} pattern={pattern} type={type} value={value} onChange={(e) => setValue(e.target.value)} className={"outline-none text-[14px]" + (fitInput ? "" : " w-full")} style={{ fieldSizing: "content" }} />
                 <span style={{ color: "var(--qu-text-secondary)" }} className="select-none text-[14px]">{suffix}</span>
             </div>
+            {extraText && <div style={{ fontSize: "14px", color: "var(--qu-text-secondary)", marginTop: "10px" }}>{extraText}</div>}
         </div>
     );
 }
