@@ -1,5 +1,5 @@
 import { SidebarItem } from "@/components/qui/sidebar";
-import { BookUserIcon, CalendarIcon, CheckIcon, FolderIcon, HomeIcon, ListCheckIcon, ListChecksIcon, MailboxIcon, MailIcon, UsersIcon } from "lucide-react";
+import { BookUserIcon, CalendarIcon, CheckIcon, FolderIcon, GlobeIcon, HomeIcon, ListCheckIcon, ListChecksIcon, MailboxIcon, MailIcon, UsersIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { Separator } from "../ui/separator";
 import { useContext } from "react";
@@ -25,13 +25,14 @@ export function AdminSidebar() {
         <div className="sidebar">
             <div className="sidebar-tenant-name">{auth.data?.tenant?.displayName ? auth.data?.tenant?.displayName : auth.data?.tenant?.name}</div>
             <SidebarItem index={0} title="Home" onClick={() => { router.push("/admin") }} Icon={HomeIcon} active={path == "/admin"} />
+            <SidebarItem index={1} title="Domains" onClick={() => { router.push("/admin/domains") }} Icon={GlobeIcon} active={path == "/admin/domains"} />
             <Separator style={{ margin: "10px 0" }} />
             <div className="sidebar-section-title">Identities</div>
-            <SidebarItem index={1} title="Accounts" onClick={() => { router.push("/admin/accounts") }} Icon={MailboxIcon} active={path == "/admin/accounts"} />
-            <SidebarItem index={2} title="Groups" onClick={() => { router.push("/admin/groups") }} Icon={UsersIcon} active={path == "/admin/groups"} />
+            <SidebarItem index={2} title="Accounts" onClick={() => { router.push("/admin/accounts") }} Icon={MailboxIcon} active={path == "/admin/accounts"} />
+            <SidebarItem index={3} title="Groups" onClick={() => { router.push("/admin/groups") }} Icon={UsersIcon} active={path == "/admin/groups"} />
             <Separator style={{ margin: "10px 0" }} />
             <div className="sidebar-section-title">Organization</div>
-            <SidebarItem index={3} title="Shared Folders" onClick={() => { router.push("/admin/sharedfolders") }} Icon={FolderIcon} active={path == "/admin/sharedfolders"} />
+            <SidebarItem index={4} title="Shared Folders" onClick={() => { router.push("/admin/sharedfolders") }} Icon={FolderIcon} active={path == "/admin/sharedfolders"} />
         </div>
     );
 }

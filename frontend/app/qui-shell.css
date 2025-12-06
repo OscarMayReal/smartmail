@@ -218,3 +218,21 @@ body {
 code {
     font-family: 'DM Mono', monospace;
 }
+
+.drawer-section-title {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--qu-text);
+}
+
+.drawer-section-subtitle {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--qu-text-secondary);
+}
+
+.drawer-section-container {
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 20px;
+}

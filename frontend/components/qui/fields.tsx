@@ -2,7 +2,7 @@ import { HTMLInputTypeAttribute, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { BarcodeIcon } from "lucide-react";
+import { BarcodeIcon, CheckIcon, ClipboardCopyIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 // import { Editor } from "@monaco-editor/react";
@@ -115,6 +115,27 @@ export function SuffixedInput({ label, value, setValue, suffix, fitInput, patter
                 <span style={{ color: "var(--qu-text-secondary)" }} className="select-none text-[14px]">{suffix}</span>
             </div>
             {extraText && <div style={{ fontSize: "14px", color: "var(--qu-text-secondary)", marginTop: "10px" }}>{extraText}</div>}
+        </div>
+    );
+}
+
+export function CopyValueRow({ value, title }: { value: string, title: string }) {
+    const [copied, setCopied] = useState(false);
+    return (
+        <div style={{ padding: "20px 20px 0px 20px" }}>
+            <div style={{ fontSize: "14px", fontWeight: "500", marginBottom: "10px" }}>{title}</div>
+            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "10px" }}>
+                <Input value={value} readOnly style={{ flex: 1, backgroundColor: "var(--header-background)", color: "var(--qu-text)" }} />
+                <Button variant="outline" onClick={() => {
+                    navigator.clipboard.writeText(value);
+                    setCopied(true);
+                    setTimeout(() => {
+                        setCopied(false);
+                    }, 2000);
+                }}>
+                    {copied ? <><CheckIcon size={20} />Copied</> : <><ClipboardCopyIcon size={20} />Copy</>}
+                </Button>
+            </div>
         </div>
     );
 }
