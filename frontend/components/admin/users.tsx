@@ -9,7 +9,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import {
     Drawer,
     DrawerClose,
@@ -20,15 +20,20 @@ import {
     DrawerTitle,
     DrawerTrigger,
 } from "@/components/ui/drawer"
+import { ResourceUser } from "keystone-lib";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { CheckIcon, PlusIcon, SaveIcon, SearchIcon, TrashIcon, XIcon } from "lucide-react";
+import { CheckIcon, PlusIcon, SaveIcon, SearchIcon, TrashIcon, UserIcon, XIcon } from "lucide-react";
 import { InputField, PrefixedInput, SelectField, SuffixedInput, SwitchInput } from "@/components/qui/fields";
 import { emailaccount } from "../../../server/generated/prisma/browser";
 import { useContext } from "react";
 import { GlobalContext } from "@/app/admin/layout";
 import { ConfirmDialog } from "../qui/confirmDialog";
 import { setTimeout } from "timers";
+import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemSeparator, ItemTitle } from "../ui/item";
+import { Avatar } from "@radix-ui/react-avatar";
+import { Checkbox } from "../ui/checkbox";
+import { UserItem } from "../qui/header";
 
 export function MailAccountTable({ accounts, onReload }: { accounts: emailaccount[], onReload: () => void }) {
     const { resources } = useContext(GlobalContext);
@@ -157,46 +162,74 @@ export function AddAccountDrawer({ open, setOpen, accounts, onReload }: { open: 
     const { resources, auth } = useContext(GlobalContext);
     const [domain, setDomain] = useState("");
     const [assignTo, setAssignTo] = useState("");
+    const [accountsToCreate, setAccountsToCreate] = useState<string[]>([]);
     return (
         <Drawer handleOnly direction="right" open={open} onOpenChange={setOpen}>
             <DrawerTrigger asChild>
-                <Button variant="outline"><PlusIcon size={20} />Add Email Account</Button>
+                <Button variant="outline"><PlusIcon size={20} />Import Email Accounts</Button>
             </DrawerTrigger>
             <DrawerContent>
                 <DrawerHeader>
-                    <DrawerTitle style={{ color: "var(--qu-text)", fontWeight: "500" }}>Add Email Account</DrawerTitle>
+                    <DrawerTitle style={{ color: "var(--qu-text)", fontWeight: "500" }}>Import Email Accounts</DrawerTitle>
+                    <DrawerDescription style={{ color: "var(--qu-text-secondary)" }}>Create email account for your KeyStone users</DrawerDescription>
                 </DrawerHeader>
                 <Separator />
                 <div className="drawer-mainarea">
-                    {resources?.data?.domains && resources?.data?.domains.length > 0 && <SelectField label="Domain" value={domain} setValue={setDomain} options={resources?.data?.domains?.map((domain) => ({ id: domain.id, name: domain.name, disabled: !domain.verified, description: domain.verified ? null : "Not Set MX Record or Not Verified" }))} />}
-                    {domain && <SelectField label="Assign to" value={assignTo} setValue={setAssignTo} options={resources?.data?.users?.map((user) => (user.domainId === domain ? {
-                        id: user.id,
-                        name: user.name,
-                        description: accounts.find((account) => account.userId === user.id) ? "Already Assigned" : user.tenant?.name + "/" + user.username,
-                        disabled: accounts.find((account) => account.userId === user.id)
-                    } : null))} />}
-                    {domain && assignTo && <>
-                        <SuffixedInput label="Address" extraText="currently, custom email addresses are not supported" value={resources?.data?.users?.find((user) => user.id === assignTo)?.email.split("@")[0]} disabled={true} suffix={"@" + resources?.data?.domains?.find((rdomain) => rdomain.id === domain)?.name} />
-                    </>}
+
+                    <div style={{ padding: "20px" }}>
+                        <ItemGroup style={{ border: "1px solid var(--qu-border-color)", borderRadius: "10px", backgroundColor: "var(--qu-header-background)" }}>
+                            {resources?.data?.users?.filter((user) => {
+                                return !accounts.find((account) => account.userId === user.id) &&
+                                    resources?.data?.domains?.find((domain) => domain.id === user.domainId)?.verified
+                            }).map((user, index) => (
+                                <Fragment key={user.id}>
+                                    <Item key={user.id}>
+                                        <ItemContent style={{ minWidth: "0px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                            <ItemTitle style={{ minWidth: "0px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name}</ItemTitle>
+                                            <ItemDescription style={{ minWidth: "0px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</ItemDescription>
+                                        </ItemContent>
+                                        <ItemActions>
+                                            <Checkbox checked={accountsToCreate.includes(user.id)} onCheckedChange={(checked) => {
+                                                if (checked) {
+                                                    setAccountsToCreate([...accountsToCreate, user.id]);
+                                                } else {
+                                                    setAccountsToCreate(accountsToCreate.filter((id) => id !== user.id));
+                                                }
+                                            }} />
+                                        </ItemActions>
+                                    </Item>
+                                    {index !== resources?.data?.users?.filter((user) => {
+                                        return !accounts.find((account) => account.userId === user.id) &&
+                                            resources?.data?.domains?.find((domain) => domain.id === user.domainId)?.verified
+                                    }).length - 1 && <ItemSeparator />}
+                                </Fragment>
+                            ))}
+                        </ItemGroup>
+                    </div>
+                    <div className="p-[20px] pt-0">
+                        This will create {accountsToCreate.length} Email account{accountsToCreate.length === 1 ? "" : "s"} on "{auth?.data?.tenant.displayName || auth?.data?.tenant.name}"
+                    </div>
                 </div>
                 <Separator />
                 <DrawerFooter style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-end" }}>
                     <Button variant="outline" onClick={() => setOpen(false)}><XIcon size={20} />Cancel</Button>
                     <Button onClick={async () => {
-                        await fetch("/api/admin/accounts", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "Accept": "application/json",
-                                "Authorization": "Bearer " + auth?.data?.sessionId
-                            },
-                            body: JSON.stringify({
-                                domainId: domain,
-                                userId: assignTo,
-                                address: resources?.data?.users?.find((user) => user.id === assignTo)?.email.split("@")[0] + "@" + resources?.data?.domains?.find((rdomain) => rdomain.id === domain)?.name,
-                                color: "default"
+                        await Promise.all(accountsToCreate.map((userId) => {
+                            return fetch("/api/admin/accounts", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "Accept": "application/json",
+                                    "Authorization": "Bearer " + auth?.data?.sessionId
+                                },
+                                body: JSON.stringify({
+                                    domainId: resources?.data?.users?.find((user) => user.id === userId)?.domainId,
+                                    userId,
+                                    address: resources?.data?.users?.find((user) => user.id === userId)?.email.split("@")[0] + "@" + resources?.data?.domains?.find((rdomain) => rdomain.id === resources?.data?.users?.find((user) => user.id === userId)?.domainId)?.name,
+                                    color: "default"
+                                })
                             })
-                        })
+                        }))
                         setOpen(false);
                         onReload();
                     }}><CheckIcon size={20} />Add</Button>
@@ -206,8 +239,61 @@ export function AddAccountDrawer({ open, setOpen, accounts, onReload }: { open: 
     );
 }
 
+// export function AddAccountDrawer({ open, setOpen, accounts, onReload }: { open: boolean, setOpen: (open: boolean) => void, accounts: emailaccount[], onReload: () => void }) {
+//     const { resources, auth } = useContext(GlobalContext);
+//     const [domain, setDomain] = useState("");
+//     const [assignTo, setAssignTo] = useState("");
+//     return (
+//         <Drawer handleOnly direction="right" open={open} onOpenChange={setOpen}>
+//             <DrawerTrigger asChild>
+//                 <Button variant="outline"><PlusIcon size={20} />Add Email Account</Button>
+//             </DrawerTrigger>
+//             <DrawerContent>
+//                 <DrawerHeader>
+//                     <DrawerTitle style={{ color: "var(--qu-text)", fontWeight: "500" }}>Add Email Account</DrawerTitle>
+//                 </DrawerHeader>
+//                 <Separator />
+//                 <div className="drawer-mainarea">
+//                     {resources?.data?.domains && resources?.data?.domains.length > 0 && <SelectField label="Domain" value={domain} setValue={setDomain} options={resources?.data?.domains?.map((domain) => ({ id: domain.id, name: domain.name, disabled: !domain.verified, description: domain.verified ? null : "Not Set MX Record or Not Verified" }))} />}
+//                     {domain && <SelectField label="Assign to" value={assignTo} setValue={setAssignTo} options={resources?.data?.users?.map((user) => (user.domainId === domain ? {
+//                         id: user.id,
+//                         name: user.name,
+//                         description: accounts.find((account) => account.userId === user.id) ? "Already Assigned" : user.tenant?.name + "/" + user.username,
+//                         disabled: accounts.find((account) => account.userId === user.id)
+//                     } : null))} />}
+//                     {domain && assignTo && <>
+//                         <SuffixedInput label="Address" extraText="currently, custom email addresses are not supported" value={resources?.data?.users?.find((user) => user.id === assignTo)?.email.split("@")[0]} disabled={true} suffix={"@" + resources?.data?.domains?.find((rdomain) => rdomain.id === domain)?.name} />
+//                     </>}
+//                 </div>
+//                 <Separator />
+//                 <DrawerFooter style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-end" }}>
+//                     <Button variant="outline" onClick={() => setOpen(false)}><XIcon size={20} />Cancel</Button>
+//                     <Button onClick={async () => {
+//                         await fetch("/api/admin/accounts", {
+//                             method: "POST",
+//                             headers: {
+//                                 "Content-Type": "application/json",
+//                                 "Accept": "application/json",
+//                                 "Authorization": "Bearer " + auth?.data?.sessionId
+//                             },
+//                             body: JSON.stringify({
+//                                 domainId: domain,
+//                                 userId: assignTo,
+//                                 address: resources?.data?.users?.find((user) => user.id === assignTo)?.email.split("@")[0] + "@" + resources?.data?.domains?.find((rdomain) => rdomain.id === domain)?.name,
+//                                 color: "default"
+//                             })
+//                         })
+//                         setOpen(false);
+//                         onReload();
+//                     }}><CheckIcon size={20} />Add</Button>
+//                 </DrawerFooter>
+//             </DrawerContent>
+//         </Drawer>
+//     );
+// }
+
 export function UserSearchInput({ onUserSelect }: { onUserSelect: (user: any) => any }) {
-    const session = useSession();
+    const { resources } = useContext(GlobalContext);
     const [value, setValue] = useState("");
     const [user, setUser] = useState<any>(null);
     return (
@@ -218,11 +304,8 @@ export function UserSearchInput({ onUserSelect }: { onUserSelect: (user: any) =>
                     <span style={{ color: "var(--qu-text-secondary)" }} className="select-none text-[14px]">{session?.data?.user?.tenant.name + "/"}</span>
                     <input type="text" value={value} onChange={(e) => setValue(e.target.value)} onKeyDown={(e) => {
                         if (e.key === "Enter") {
-                            getUserByUsername(value).then((data) => {
-                                if (data?.error) {
-                                    console.log(data.error);
-                                    setUser(null);
-                                } else {
+                            resources?.data?.users?.find((user) => user.username === value).then((data) => {
+                                if (data) {
                                     setUser(data);
                                 }
                             });
@@ -230,11 +313,8 @@ export function UserSearchInput({ onUserSelect }: { onUserSelect: (user: any) =>
                     }} className="outline-none text-[14px] w-full" />
                 </div>
                 <Button variant="outline" onClick={() => {
-                    getUserByUsername(value).then((data) => {
-                        if (data?.error) {
-                            console.log(data.error);
-                            setUser(null);
-                        } else {
+                    resources?.data?.users?.find((user) => user.username === value).then((data) => {
+                        if (data) {
                             setUser(data);
                         }
                     });
