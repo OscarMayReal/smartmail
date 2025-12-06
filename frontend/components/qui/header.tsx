@@ -107,6 +107,7 @@ export const Header = ({ auth }: { auth: any }) => {
 };
 
 function SearchBox() {
+    const { searchContent, setSearchContent } = useContext(GlobalContext);
     const [open, setOpen] = useState(false);
     useEffect(() => {
         window.addEventListener("keydown", (e) => {
@@ -128,7 +129,7 @@ function SearchBox() {
                 <InputGroupAddon>
                     <SearchIcon />
                 </InputGroupAddon>
-                <InputGroupInput placeholder="Search" />
+                <InputGroupInput placeholder="Search" value={searchContent} onChange={(e) => { setSearchContent(e.target.value) }} />
             </InputGroup>
             <Tooltip>
                 <TooltipTrigger asChild>

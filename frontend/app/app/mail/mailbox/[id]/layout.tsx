@@ -11,6 +11,7 @@ export default function MailboxLayout({ children }: { children: React.ReactNode 
     const { messages, setMessages, folders } = useContext(MailContext)
     const { auth } = useContext(GlobalContext)
     const params = useParams()
+    const { searchContent } = useContext(GlobalContext)
     useEffect(() => {
         if (!auth.data?.sessionId) return
         fetch("/api/mail/folders/" + params.id + "/messages", {
@@ -37,7 +38,10 @@ export default function MailboxLayout({ children }: { children: React.ReactNode 
                     </Empty>
                 ) : (
                     <div className="mailbox-sidebar-items">
-                        {messages.map((message: email & { selected: boolean }) => (
+                        {messages.filter((message: email & { selected: boolean }) => {
+                            if (searchContent == "") return true;
+                            return message.subject.toLowerCase().includes(searchContent.toLowerCase()) || message.email.html.toLowerCase().includes(searchContent.toLowerCase())
+                        }).map((message: email & { selected: boolean }) => (
                             <MailItem key={message.id} item={message} />
                         ))}
                     </div>
