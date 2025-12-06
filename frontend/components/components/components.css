@@ -190,6 +190,21 @@
     border: none !important;
 }
 
+.tiptap p {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.tiptap blockquote {
+    margin: 0 !important;
+    padding-left: 1em;
+    border-left: 2px solid var(--qu-border-color);
+}
+
+.tiptap blockquote p {
+    margin: 0 !important;
+}
+
 pre>code {
     background-color: rgb(49, 49, 49);
     color: white;

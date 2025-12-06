@@ -10,7 +10,7 @@ import { ButtonGroup } from "../ui/button-group";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { email } from "../../../server/generated/prisma/browser";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { GlobalContext } from "@/app/app/layout";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -20,6 +20,9 @@ import { MailContext } from "@/app/app/mail/layout";
 import { toast } from "sonner";
 import { getTypeIcon } from "./folder";
 import { folder } from "../../../server/generated/prisma/browser";
+import router from "next/router";
+import { Tag, TagInput } from "emblor-maintained";
+import { ComposeHeader, RecepientsInput } from "./compose";
 
 export async function moveEmailInteractive({ messageId, messages, router, params, setMessages, folder, auth, moveToNext = true }: { messageId: string, messages: email[], router: any, params: any, setMessages: (messages: email[]) => void, folder: folder, auth: any, moveToNext?: boolean }) {
     await fetch(`/api/mail/messages/${messageId}/move`, {
@@ -223,6 +226,22 @@ function MoveEmailItem({ folder, messageId }: { folder: any, messageId: string |
     );
 }
 
+// Helper function to normalize email HTML spacing
+function normalizeEmailHTML(html: string): string {
+    return html
+        // Remove empty paragraphs
+        .replace(/<p>\s*<\/p>/gi, '')
+        // Convert </p><p> to <br> to eliminate spacing between paragraphs
+        .replace(/<\/p>\s*<p>/gi, '<br>')
+        // Remove opening and closing <p> tags
+        .replace(/<\/?p>/gi, '')
+        // Replace multiple consecutive <br> tags with single one
+        .replace(/(<br\s*\/?>\s*){2,}/gi, '<br>')
+        // Clean up any remaining empty tags
+        .replace(/<p>\s*<br\s*\/?>\s*<\/p>/gi, '')
+        .trim();
+}
+
 export function ReplyComposer({ setReplyMode, replyMode, message }: { setReplyMode: (mode: "reply" | "forward" | null) => void, replyMode: "reply" | "forward" | null, message: email }) {
     const editor = useEditor({
         extensions: [
@@ -232,8 +251,8 @@ export function ReplyComposer({ setReplyMode, replyMode, message }: { setReplyMo
             <p></p>
             <p>Sent with SmartMail</p>
             <hr />
-            <p>On ${new Date(message.date).toDateString()} at ${new Date(message.date).toLocaleTimeString()} ${message.name} wrote:</p>
-            <p>${message.email.html}</p>
+            <p>On ${new Date(message.date).toDateString()} at ${new Date(message.date).toLocaleTimeString()}, ${message.name} <<a href="mailto:${message.from}">${message.from}</a>> wrote:</p>
+            <blockquote>${normalizeEmailHTML(message.email.html)}</blockquote>
         ` : replyMode == "forward" ? `
             <p></p>
             <p>Sent with SmartMail</p>
@@ -244,7 +263,7 @@ export function ReplyComposer({ setReplyMode, replyMode, message }: { setReplyMo
             <p>Date: ${new Date(message.date).toDateString()} at ${new Date(message.date).toLocaleTimeString()}</p>
             <p>Subject: ${message.subject}</p>
             <p>===== Forwarded message =====</p>
-            <p>${message.email.html}</p>
+            <blockquote>${normalizeEmailHTML(message.email.html)}</blockquote>
         ` : "",
         immediatelyRender: false
     })
@@ -278,10 +297,15 @@ export function ReplyComposer({ setReplyMode, replyMode, message }: { setReplyMo
             }
         },
     })
+    const { auth } = useContext(GlobalContext)
+    const [tags, setTags] = useState<Tag[]>([])
+    const [activeTagIndex, setActiveTagIndex] = useState<number>(0)
+    const [subject, setSubject] = useState<string>("fwd: " + message.subject)
     return (
         <>
             <Separator />
             <ReplyForwardHeader />
+            {replyMode == "forward" && <RecepientsInput tags={tags} setTags={setTags} activeTagIndex={activeTagIndex} setActiveTagIndex={setActiveTagIndex} subject={subject} setSubject={setSubject} />}
             <div className="reply-composer shadow-xs">
                 <div className="reply-composer-header">
                     <Button variant="ghost" size="icon-sm" ><UndoIcon /></Button>
@@ -298,7 +322,27 @@ export function ReplyComposer({ setReplyMode, replyMode, message }: { setReplyMo
                     <div className="flex-1" />
                     <Separator orientation="vertical" />
                     <Button variant="ghost" size="icon-sm" onClick={() => { setReplyMode(null) }}><XIcon /></Button>
-                    <Button variant="default" size="icon-sm"><SendIcon /></Button>
+                    <Button variant="default" size="icon-sm" onClick={() => {
+                        fetch("/api/mail/send", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Accept": "application/json",
+                                "Authorization": "Bearer " + auth?.data?.sessionId
+                            },
+                            body: JSON.stringify({
+                                email: {
+                                    to: replyMode == "reply" ? message.from : tags.map(tag => tag.text),
+                                    subject: replyMode == "reply" ? "Re: " + message.subject : subject,
+                                    html: editor?.getHTML(),
+                                    inReplyTo: message.emailid,
+                                }
+                            })
+                        }).then(() => {
+                            setReplyMode(null);
+                            toast.success("Reply sent successfully");
+                        })
+                    }}><SendIcon /></Button>
                 </div>
                 <EditorContent className="reply-composer-content p-3" editor={editor} />
             </div>
