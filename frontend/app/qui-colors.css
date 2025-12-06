@@ -1,5 +1,6 @@
 * {
     --qu-accent: #1c8b5f;
+    --qu-accent-foreground: #ffffff;
     --qu-background: rgb(245, 245, 245);
     --qu-sidebar-background: rgb(250, 250, 250);
     --qu-text: #666666;

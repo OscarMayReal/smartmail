@@ -7,6 +7,7 @@ import { ButtonGroup } from "@/components/ui/button-group";
 import { useEffect, useRef, useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
+import "./styles.css";
 
 export default function CalendarPage() {
     const localizer = momentLocalizer(moment);

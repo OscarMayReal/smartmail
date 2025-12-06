@@ -1,0 +1,45 @@
+.rbc-month-view {
+    border: none;
+}
+
+.rbc-time-view {
+    border: none;
+}
+
+.rbc-time-content {
+    border-top-width: 1px;
+}
+
+.rbc-date-cell {
+    padding-top: 10px;
+    padding-right: 10px;
+}
+
+.rbc-date-cell>.rbc-button-link {
+    background-color: transparent;
+    height: 40px;
+    width: 40px;
+    border-radius: 50%;
+}
+
+.rbc-date-cell.rbc-now>.rbc-button-link {
+    background-color: var(--qu-accent);
+    color: var(--qu-accent-foreground);
+}
+
+.rbc-day-bg.rbc-today {
+    background-color: var(--qu-item-active);
+}
+
+.rbc-events-container {
+    background-color: transparent;
+}
+
+.rbc-day-slot.rbc-today {
+    background-color: var(--qu-item-active);
+
+}
+
+.rbc-time-slot {
+    border-top-width: 0px !important;
+}

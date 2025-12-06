@@ -15,17 +15,19 @@ datasource db {
 }
 
 model emailaccount {
-  id             String    @id @unique @default(uuid())
+  id             String     @id @unique @default(uuid())
   organizationId String?
   userId         String
-  createdAt      DateTime  @default(now())
-  accessedAt     DateTime  @default(now())
-  address        String    @unique
+  createdAt      DateTime   @default(now())
+  accessedAt     DateTime   @default(now())
+  address        String     @unique
   domainId       String?
   emails         email[]
   folders        folder[]
-  color          String    @default("default")
+  color          String     @default("default")
   contacts       contact[]
+  calendars      calendar[]
+  invited        invitee[]
 }
 
 model folder {
@@ -62,5 +64,31 @@ model contact {
   name      String
   info      Json
   accountId String
+  account   emailaccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
+
+model calendar {
+  id        String       @id @unique @default(uuid())
+  name      String
+  accountId String
+  account   emailaccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  events    event[]
+}
+
+model event {
+  id         String    @id @unique @default(uuid())
+  name       String
+  accountId  String
+  calendarId String
+  calendar   calendar  @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+  invitees   invitee[]
+}
+
+model invitee {
+  id        String       @id @unique @default(uuid())
+  name      String
+  accountId String
+  eventId   String
+  event     event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
   account   emailaccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }
