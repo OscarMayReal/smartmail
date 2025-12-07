@@ -47,7 +47,7 @@ export default function MailPage({ children }: { children: React.ReactNode }) {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => setCreateFolderDialogOpen(true)}><FolderIcon />Folder</DropdownMenuItem>
-                                <DropdownMenuItem><TagIcon />Label</DropdownMenuItem>
+                                {/* <DropdownMenuItem><TagIcon />Label</DropdownMenuItem> */}
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </ButtonGroup>

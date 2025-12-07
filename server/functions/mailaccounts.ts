@@ -1,12 +1,21 @@
 import { PrismaClient } from "../generated/prisma/client.ts";
 import { PrismaPg } from '@prisma/adapter-pg'
 import "dotenv/config";
+import { verifyAccountAccess } from "./authorization.ts";
 
 var prisma = new PrismaClient({
     adapter: new PrismaPg({
         connectionString: process.env.DATABASE_URL
     })
 });
+
+export async function getMailAccountById(id: string) {
+    return await prisma.emailaccount.findUnique({
+        where: {
+            id
+        }
+    })
+}
 
 export async function createMailAccount({
     userId,
@@ -85,6 +94,16 @@ export async function createMailAccount({
                 name: "Archive",
                 type: "smartmail.folder.archive"
             }
+        }),
+        prisma.calendar.create({
+            data: {
+                account: {
+                    connect: {
+                        id: mailaccount.id
+                    }
+                },
+                name: "Calendar"
+            }
         })
     ])
     return mailaccount;
@@ -106,7 +125,13 @@ export async function getAccountByAddress(address: string) {
     })
 }
 
-export async function deleteMailAccount(id: string) {
+export async function deleteMailAccount(id: string, userId: string) {
+    // Verify user owns the account
+    const hasAccess = await verifyAccountAccess(id, userId);
+    if (!hasAccess) {
+        throw new Error("Unauthorized: You do not have access to this account");
+    }
+
     await prisma.emailaccount.delete({
         where: {
             id

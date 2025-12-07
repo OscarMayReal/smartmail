@@ -31,15 +31,13 @@ model emailaccount {
 }
 
 model folder {
-  id             String       @id @unique @default(uuid())
-  name           String
-  type           String
-  accountId      String
-  organizationId String?
-  domainId       String?
-  createdAt      DateTime     @default(now())
-  emails         email[]
-  account        emailaccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  id        String       @id @unique @default(uuid())
+  name      String
+  type      String
+  accountId String
+  createdAt DateTime     @default(now())
+  emails    email[]
+  account   emailaccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }
 
 model email {
@@ -68,27 +66,33 @@ model contact {
 }
 
 model calendar {
-  id        String       @id @unique @default(uuid())
-  name      String
-  accountId String
-  account   emailaccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  events    event[]
+  id            String       @id @unique @default(uuid())
+  name          String
+  accountId     String
+  account       emailaccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  events        event[]
+  invitedEvents invitee[]
 }
 
 model event {
   id         String    @id @unique @default(uuid())
   name       String
-  accountId  String
   calendarId String
   calendar   calendar  @relation(fields: [calendarId], references: [id], onDelete: Cascade)
   invitees   invitee[]
+  start      DateTime
+  end        DateTime
+  data       Json
+  allDay     Boolean   @default(false)
 }
 
 model invitee {
-  id        String       @id @unique @default(uuid())
-  name      String
-  accountId String
-  eventId   String
-  event     event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  account   emailaccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  id         String       @id @unique @default(uuid())
+  name       String
+  accountId  String
+  eventId    String
+  calendarId String?
+  calendar   calendar?    @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+  event      event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  account    emailaccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }

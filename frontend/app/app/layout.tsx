@@ -2,11 +2,11 @@
 import { SettingsDialog } from "@/components/components/settings";
 import { NavigationSidebar } from "@/components/components/sidebar";
 import { Header } from "@/components/qui/header";
-import { useAuth } from "keystone-lib";
+import { AuthState, useAuth } from "keystone-lib";
 import { createContext, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 export const GlobalContext = createContext({
-    auth: undefined as any,
+    auth: undefined as AuthState | undefined,
     settingsOpen: false,
     setSettingsOpen: (open: boolean) => { },
     searchContent: "",

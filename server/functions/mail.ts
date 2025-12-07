@@ -1,6 +1,7 @@
 import { PrismaClient } from "../generated/prisma/client.ts";
 import { PrismaPg } from '@prisma/adapter-pg'
 import "dotenv/config";
+import { verifyAccountAccess, verifyEmailAccess, verifyFolderAccess } from "./authorization.ts";
 
 var prisma = new PrismaClient({
     adapter: new PrismaPg({
@@ -8,7 +9,9 @@ var prisma = new PrismaClient({
     })
 });
 
-export async function getMailAccountFolders(accountId: string) {
+export async function getMailAccountFolders(accountId: string, userId: string) {
+    // Note: We still accept userId for consistency, but the account should already 
+    // belong to the user since it's fetched via getAccountsByUserId in the API route
     return await prisma.folder.findMany({
         where: {
             accountId
@@ -16,7 +19,8 @@ export async function getMailAccountFolders(accountId: string) {
     })
 }
 
-export async function CreateFolder({ accountId, name, type }: { accountId: string, name: string, type: string }) {
+export async function CreateFolder({ accountId, name, type, userId }: { accountId: string, name: string, type: string, userId: string }) {
+    // Account already verified as owned by user in API route via getAccountsByUserId
     return await prisma.folder.create({
         data: {
             account: {
@@ -30,31 +34,72 @@ export async function CreateFolder({ accountId, name, type }: { accountId: strin
     })
 }
 
-export async function getMailAccountMessages(folderId: string) {
-    return await prisma.email.findMany({
+export async function getMailAccountMessages(folderId: string, userId: string) {
+    // Instead of verifying then querying, we query with ownership constraints built in
+    // This returns messages only if the folder belongs to one of the user's accounts
+    const messages = await prisma.email.findMany({
         where: {
-            folderId
+            folderId,
+            folder: {
+                account: {
+                    userId: userId
+                }
+            }
+        }
+    });
+
+    return messages;
+}
+
+export async function getEmailById(id: string, userId: string) {
+    // Query with ownership constraint - only returns email if user owns the account
+    return await prisma.email.findFirst({
+        where: {
+            id,
+            account: {
+                userId: userId
+            }
         }
     })
 }
 
-export function getEmailById(id: string) {
-    return prisma.email.findUnique({
+export async function moveEmail({ id, folderId, userId }: { id: string, folderId: string, userId: string }) {
+    // Update only if user owns both the email and the target folder
+    // First verify the target folder belongs to user's account
+    const targetFolder = await prisma.folder.findFirst({
         where: {
-            id
+            id: folderId,
+            account: {
+                userId: userId
+            }
         }
-    })
-}
+    });
 
-export function moveEmail({ id, folderId }: { id: string, folderId: string }) {
-    return prisma.email.update({
+    if (!targetFolder) {
+        throw new Error("Unauthorized: You do not have access to the target folder");
+    }
+
+    // Update with constraint that email belongs to user's account
+    const result = await prisma.email.updateMany({
         where: {
-            id
+            id,
+            account: {
+                userId: userId
+            }
         },
         data: {
             folderId
         }
-    })
+    });
+
+    if (result.count === 0) {
+        throw new Error("Unauthorized: You do not have access to this email");
+    }
+
+    // Return the updated email
+    return await prisma.email.findUnique({
+        where: { id }
+    });
 }
 
 export async function receiveEmail({ accountId, email }: { accountId: string, email: any }) {
@@ -94,16 +139,19 @@ export async function receiveEmail({ accountId, email }: { accountId: string, em
     })
 }
 
-export async function sendEmail({ accountId, email, user }: { accountId: string, email: any, user: any }) {
+export async function sendEmail({ accountId, email, user, userId }: { accountId: string, email: any, user: any, userId: string }) {
     console.log(email);
-    var account = await prisma.emailaccount.findUnique({
+
+    // Query account with ownership constraint
+    var account = await prisma.emailaccount.findFirst({
         where: {
-            id: accountId
+            id: accountId,
+            userId: userId
         }
-    })
+    });
+
     if (!account) {
-        //console.log("Account not found");
-        return;
+        throw new Error("Unauthorized: You do not have access to this account");
     }
     email.from = '"' + user.name + '" <' + account.address + '>';
     fetch(process.env.MAILSERVER_URL + "/api/mail/send", {

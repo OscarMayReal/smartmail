@@ -16,14 +16,14 @@ export function ListTenantMailAccounts(tenantId: string) {
     })
 }
 
-export function CreateTenantMailAccount(tenantId: string, userId: string, address: string, domainId: string, color: string) {
-    return prisma.emailaccount.create({
-        data: {
-            userId,
-            organizationId: tenantId,
-            address,
-            domainId,
-            color
-        }
-    })
-}
+// export function CreateTenantMailAccount(tenantId: string, userId: string, address: string, domainId: string, color: string) {
+//     return prisma.emailaccount.create({
+//         data: {
+//             userId,
+//             organizationId: tenantId,
+//             address,
+//             domainId,
+//             color
+//         }
+//     })
+// }
