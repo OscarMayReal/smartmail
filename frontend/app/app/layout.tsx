@@ -21,6 +21,12 @@ export default function MailLayout({ children }: { children: React.ReactNode }) 
         }
     }, [path])
     const auth = useAuth({ keystoneUrl: process.env.NEXT_PUBLIC_KEYSTONE_URL!, appId: process.env.NEXT_PUBLIC_APPID! });
+    useEffect(() => {
+        if (!auth?.loaded) return
+        if (!auth?.data?.sessionId) {
+            window.location.href = "https://keystoneapi.qplus.cloud/auth/signin?redirectTo=" + window.location.href
+        }
+    }, [auth])
     const [searchContent, setSearchContent] = useState("");
     const [settingsOpen, setSettingsOpen] = useState(false);
     return (

@@ -23,7 +23,6 @@ export const AdminHeader = ({ auth }: { auth: any }) => {
     const size = useWindowSize();
     const [open, setOpen] = useState(false);
     const path = usePathname();
-    const searchParams = useSearchParams()
     useEffect(() => {
         if (auth.data?.user?.id && auth.loaded) {
             console.log(auth.data);
@@ -58,7 +57,6 @@ export const Header = ({ auth }: { auth: any }) => {
     const size = useWindowSize();
     const [open, setOpen] = useState(false);
     const path = usePathname();
-    const searchParams = useSearchParams()
     useEffect(() => {
         if (auth.data?.user?.id && auth.loaded) {
             console.log(auth.data);
@@ -85,7 +83,7 @@ export const Header = ({ auth }: { auth: any }) => {
                     <SearchBox />
                 </div>
             </div>
-            <Tooltip>
+            {/* <Tooltip>
                 <TooltipTrigger asChild>
                     <Button variant="ghost" size={"icon-sm"} className="mr-1" onClick={() => { setOpen(true) }}><BellIcon /></Button>
                 </TooltipTrigger>
@@ -100,7 +98,7 @@ export const Header = ({ auth }: { auth: any }) => {
                 <TooltipContent style={{ backgroundColor: "black", color: "white" }}>
                     Settings
                 </TooltipContent>
-            </Tooltip>
+            </Tooltip> */}
             <HeaderUser auth={auth} />
         </header>
     );
@@ -131,14 +129,14 @@ function SearchBox() {
                 </InputGroupAddon>
                 <InputGroupInput placeholder="Search" value={searchContent} onChange={(e) => { setSearchContent(e.target.value) }} />
             </InputGroup>
-            <Tooltip>
+            {/* <Tooltip>
                 <TooltipTrigger asChild>
                     <Button variant="ghost" size={"icon-sm"} className="ml-2" onClick={() => { setOpen(!open) }}><TerminalIcon /></Button>
                 </TooltipTrigger>
                 <TooltipContent style={{ backgroundColor: "black", color: "white" }}>
                     Open Command Palette
                 </TooltipContent>
-            </Tooltip>
+            </Tooltip> */}
             <CommandPalette isOpen={open} onOpenChange={setOpen} />
         </div>
     );
@@ -218,7 +216,7 @@ function HeaderUser({ auth }: { auth: any }) {
                 <DropdownMenuSeparator />
                 {/* <DropdownMenuItem className="color-[var(--qu-text)]" onClick={() => { LogOut().then(() => { window.location.href = process.env.NEXT_PUBLIC_API_URL + "/auth/signin?redirectTo=" + window.location.href }) }}><LogOutIcon size={20} />Logout</DropdownMenuItem> */}
 
-                <DropdownMenuItem className="color-[var(--qu-text)]" onClick={() => { }}><SettingsIcon />Admin Center</DropdownMenuItem>
+                <Link href="/admin"><DropdownMenuItem className="color-[var(--qu-text)]"><SettingsIcon />Admin Center</DropdownMenuItem></Link>
             </DropdownMenuContent>
         </DropdownMenu>
     );

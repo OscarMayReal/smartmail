@@ -1,5 +1,6 @@
 "use client"
 import { Calendar as BigCalendar, momentLocalizer, View, Views } from "react-big-calendar";
+import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import moment from "moment";
 import { Button } from "@/components/ui/button";
 import { ChevronLeftIcon, ChevronRightIcon, CalendarIcon, PlusIcon, CalendarDaysIcon, CalendarRangeIcon, ListIcon, XIcon, ChevronDownIcon } from "lucide-react";
@@ -116,14 +117,24 @@ export default function CalendarPage() {
     )
 
     const resizeEvent = useCallback(
-        ({ event, start, end }) => {
+        async ({ event, start, end }) => {
+            if (!auth?.data?.sessionId) return;
             setEvents((prev) => {
                 const existing = prev.find((ev) => ev.id === event.id) ?? {}
                 const filtered = prev.filter((ev) => ev.id !== event.id)
                 return [...filtered, { ...existing, start, end }]
             })
+            const updatedEvent = await fetch("/api/calendar/" + event.calendarId + "/events/" + event.id, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "Authorization": `Bearer ${auth.data?.sessionId}`
+                },
+                body: JSON.stringify({ ...event, start, end })
+            }).then(res => res.json());
         },
-        [setEvents]
+        [setEvents, auth]
     )
 
     const newEvent = useCallback(
@@ -149,7 +160,7 @@ export default function CalendarPage() {
     return (
         <div className="flex flex-row h-full w-full">
             <div className="folder-sidebar">
-                <ButtonGroup className="w-full p-[10px]">
+                {/* <ButtonGroup className="w-full p-[10px]">
                     <Button variant="outline" className="flex-1"><PlusIcon /> Event</Button>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -159,7 +170,10 @@ export default function CalendarPage() {
                             <DropdownMenuItem onClick={() => setCreateCalendarDialogOpen(true)}><CalendarIcon />Calendar</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
-                </ButtonGroup>
+                </ButtonGroup> */}
+                <div className="w-full p-[10px]">
+                    <Button variant="outline" onClick={() => setCreateCalendarDialogOpen(true)} className="w-full"><PlusIcon /> Calendar</Button>
+                </div>
                 <CreateCalendarDialog open={createCalendarDialogOpen} onOpenChange={setCreateCalendarDialogOpen} setCalendars={setCalendars} />
                 <Calendar
                     mode="single"
@@ -205,9 +219,10 @@ export default function CalendarPage() {
                         setEvent(event)
                         setOpen(true)
                     }}
-                    components={{
-                        eventWrapper
-                    }}
+                    popup
+                    // components={{
+                    //     eventWrapper
+                    // }}
                     onEventDrop={moveEvent}
                     onEventResize={resizeEvent}
                     onSelectSlot={newEvent}
@@ -228,6 +243,15 @@ function eventWrapper(props) {
         <div className="yourClass">
             <div>{data.name}</div>
             <div>{moment(data.start).format("HH:mm")} - {moment(data.end).format("HH:mm")}</div>
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button variant="outline">Open</Button>
+                </PopoverTrigger>
+                <PopoverContent>
+                    <div>{data.name}</div>
+                    <div>{moment(data.start).format("HH:mm")} - {moment(data.end).format("HH:mm")}</div>
+                </PopoverContent>
+            </Popover>
         </div>
     );
     const eventDiv = React.cloneElement(props.children.props.children, {}, customDiv);

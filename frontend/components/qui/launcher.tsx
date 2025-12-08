@@ -32,7 +32,7 @@ export function Launcher({ authManual, width }: { authManual?: any, width?: stri
                 <GripIcon size={20} />
             </DropdownMenuTrigger>
             <DropdownMenuContent sideOffset={10} alignOffset={10} align="start" style={{ width: "342px", padding: "15px", gap: "15px", display: "flex", flexDirection: "column" }}>
-                <div className="flex flex-row items-center gap-3">
+                {/* <div className="flex flex-row items-center gap-3">
                     <QuntemLogoSvg />
                     <div style={{ fontFamily: "Figtree", fontSize: "16px", color: "var(--qu-text)", fontWeight: "500" }}>Quntem Services</div>
                 </div>
@@ -40,25 +40,18 @@ export function Launcher({ authManual, width }: { authManual?: any, width?: stri
                     <AppTile name="KeyStone" description="Powerful and secure authentication" icon="/icon.svg" />
                     <AppTile name="Clatter" description="Simple open source business chat" icon="https://clatter.work/ClatterLogo.svg" />
                     <AppTile name="Creator" description="Design graphics with ease" icon="https://creator.quntem.co.uk/assets/creator-logo.png" />
-                    {/* <AppTile name="KeyStone" description="KeyStone" icon="/icon.svg"/>
-                    <AppTile name="KeyStone" description="KeyStone" icon="/icon.svg"/>
-                    <AppTile name="KeyStone" description="KeyStone" icon="/icon.svg"/>
-                    <AppTile name="KeyStone" description="KeyStone" icon="/icon.svg"/>
-                    <AppTile name="KeyStone" description="KeyStone" icon="/icon.svg"/>
-                    <AppTile name="KeyStone" description="KeyStone" icon="/icon.svg"/>
-                    <AppTile name="KeyStone" description="KeyStone" icon="/icon.svg"/> */}
-                </div>
+            </div> */}
                 <div className="flex flex-row items-center gap-3">
                     <LayoutGridIcon size={16} color="var(--qu-text)" />
                     <div style={{ fontFamily: "Figtree", fontSize: "16px", color: "var(--qu-text)", fontWeight: "500" }}>KeyStone Apps</div>
                 </div>
                 <div className="flex flex-row items-center gap-[10px]">
                     {lauth?.data?.user?.userAppAccess?.map((app) => {
-                        return <AppTile key={app.id} name={app.app.name} description={app.app.description} icon={app.app.logo} />
+                        return <AppTile link={app.app.mainUrl} key={app.id} name={app.app.name} description={app.app.description} icon={app.app.logo} />
                     })}
                 </div>
             </DropdownMenuContent>
-        </DropdownMenu>
+        </DropdownMenu >
     );
 }
 
@@ -71,11 +64,13 @@ export function Launcher({ authManual, width }: { authManual?: any, width?: stri
 //     );
 // }
 
-export function AppTile({ name, description, icon }: { name: string, description: string, icon: string }) {
+export function AppTile({ name, description, icon, link }: { name: string, description: string, icon: string, link: string }) {
     return (
-        <div className="flex flex-col items-center gap-1 justify-center w-[70px] h-[70px]" style={{ position: "relative", backgroundColor: "var(--qu-background)" }}>
-            <img src={icon} className="w-[30px] h-[30px]" />
+        <a href={link}><div className="flex flex-col items-center gap-1 justify-center w-[70px] h-[70px]" style={{ position: "relative", backgroundColor: "var(--qu-background)" }}>
+            <div className="w-[30px] h-[45px] flex flex-row items-center justify-center">
+                <img src={icon} className="w-[30px] h-auto" />
+            </div>
             <div style={{ fontFamily: "Figtree", fontSize: "12px", color: "var(--qu-text)", fontWeight: "500", width: "70px", whiteSpace: "nowrap", textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "70px", padding: "0px" }}>{name}</div>
-        </div>
+        </div></a>
     );
 }
