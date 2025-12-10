@@ -6,7 +6,7 @@ a simple mailserver and calendar server with a webmail interface
 
 https://mail.qplus.cloud
 
-username: admin@quntemestingsubdomain.dedyn.io
+username: somtesting/admin
 password: test
 
 ## features
