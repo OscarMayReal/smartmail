@@ -2,7 +2,9 @@ import { CalendarIcon } from "lucide-react";
 import { Checkbox } from "../ui/checkbox";
 import { calendar } from "@/../server/generated/prisma/browser";
 
-export function CalendarSidebarItem({ calendar, onSelectionChange }: { calendar: calendar, onSelectionChange: (selected: boolean) => void }) {
+export type CalendarWithSelection = calendar & { selected: boolean };
+
+export function CalendarSidebarItem({ calendar, onSelectionChange }: { calendar: CalendarWithSelection, onSelectionChange: (selected: boolean) => void }) {
     return (
         <div className={`folder-sidebar-item`}>
             <CalendarIcon size="20" />
@@ -22,21 +24,21 @@ export function CalendarSidebarItem({ calendar, onSelectionChange }: { calendar:
     );
 }
 
-export function CalendarSidebarGroup({ calendars, title, setCalendars }: { calendars: calendar[], title: string, setCalendars: (calendars: calendar[]) => void }) {
+export function CalendarSidebarGroup({ calendars, title, setCalendars }: { calendars: CalendarWithSelection[], title: string, setCalendars: (calendars: CalendarWithSelection[]) => void }) {
     return (
         <div className="folder-sidebar-group">
             <div className="folder-sidebar-group-title">{title}</div>
             <div className="folder-sidebar-group-items">
                 {calendars.map((calendar) => (
                     <CalendarSidebarItem onSelectionChange={(selected) => {
-                        setCalendars(calendars.map((calendar) => {
-                            if (calendar.id === calendar.id) {
+                        setCalendars(calendars.map((item) => {
+                            if (item.id === calendar.id) {
                                 return {
-                                    ...calendar,
+                                    ...item,
                                     selected
                                 };
                             }
-                            return calendar;
+                            return item;
                         }));
                     }} key={calendar.id} calendar={calendar} />
                 ))}

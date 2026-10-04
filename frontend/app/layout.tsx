@@ -14,6 +14,7 @@ const figtree = Figtree({
 const dmMono = DM_Mono({
   variable: "--font-dm-mono",
   weight: ["300", "400", "500"],
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {

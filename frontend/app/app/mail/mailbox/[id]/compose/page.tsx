@@ -7,9 +7,11 @@ import { useContext } from "react";
 import { GlobalContext } from "@/app/app/layout";
 import { useRouter, useParams } from "next/navigation";
 import { toast } from "sonner";
+import { MailContext } from "../../layout";
 
 export default function ComposePage() {
     const { auth } = useContext(GlobalContext);
+    const { activeAccountId } = useContext(MailContext);
     const router = useRouter();
     const params = useParams();
     const [text, setText] = useState("");
@@ -26,6 +28,7 @@ export default function ComposePage() {
                     "Authorization": "Bearer " + auth.data.sessionId
                 },
                 body: JSON.stringify({
+                    accountId: activeAccountId,
                     email: {
                         to: tags.map(tag => tag.text),
                         subject: subject,
@@ -33,7 +36,7 @@ export default function ComposePage() {
                     }
                 })
             }).then(() => {
-                router.push("/app/mail/mailbox/" + params.id)
+                router.push("/app/mail/mailbox/" + params.id + (activeAccountId ? "?accountId=" + encodeURIComponent(activeAccountId) : ""))
                 toast.success("Mail sent successfully");
             })
         }} />

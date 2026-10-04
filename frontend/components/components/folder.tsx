@@ -1,6 +1,6 @@
 "use client";
 import { InboxIcon, FolderIcon, SendIcon, PencilIcon, Trash2Icon, ArchiveIcon, XIcon, PlusIcon, MoreHorizontalIcon, PenIcon } from "lucide-react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Badge } from "../ui/badge";
 import { folder } from "@/../server/generated/prisma/browser";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -15,9 +15,10 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 export function FolderSidebarItem({ folder }: { folder: folder }) {
     const router = useRouter();
     const path = usePathname();
+    const searchParams = useSearchParams();
     var Icon = getTypeIcon(folder.type)
     return (
-        <div className={`folder-sidebar-item ${path.startsWith(`/app/mail/mailbox/${folder.id}`) ? "active" : ""}`} onClick={() => { router.push(`/app/mail/mailbox/${folder.id}`) }}>
+        <div className={`folder-sidebar-item ${path.startsWith(`/app/mail/mailbox/${folder.id}`) ? "active" : ""}`} onClick={() => { router.push(`/app/mail/mailbox/${folder.id}?${searchParams.toString()}`) }}>
             <Icon size="20" />
             <div className="folder-sidebar-item-text">{folder.name}</div>
             <div className="flex-1" />
@@ -67,7 +68,7 @@ export function FolderSidebarGroup({ folders, title }: { folders: folder[], titl
 
 export function CreateFolderDialog({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) {
     const [name, setName] = useState("");
-    const { setFolders } = useContext(MailContext);
+    const { setFolders, activeAccountId } = useContext(MailContext);
     const { auth } = useContext(GlobalContext);
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -90,7 +91,7 @@ export function CreateFolderDialog({ isOpen, onOpenChange }: { isOpen: boolean, 
                                 "Content-Type": "application/json",
                                 "Authorization": `Bearer ${auth.data?.sessionId}`
                             },
-                            body: JSON.stringify({ name })
+                            body: JSON.stringify({ name, accountId: activeAccountId })
                         }).then(res => res.json()).then(data => {
                             setFolders(data);
                             onOpenChange(false);

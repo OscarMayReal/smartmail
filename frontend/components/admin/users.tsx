@@ -34,6 +34,7 @@ import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, 
 import { Avatar } from "@radix-ui/react-avatar";
 import { Checkbox } from "../ui/checkbox";
 import { UserItem } from "../qui/header";
+import { toast } from "sonner";
 
 export function MailAccountTable({ accounts, onReload }: { accounts: emailaccount[], onReload: () => void }) {
     const { resources } = useContext(GlobalContext);
@@ -78,7 +79,13 @@ export function MailAccountTable({ accounts, onReload }: { accounts: emailaccoun
                     ))}
                 </TableHeader>
                 <TableBody>
-                    {table.getRowModel().rows.map((row) => (
+                    {table.getRowModel().rows.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
+                                No mail accounts have been configured for this tenant yet.
+                            </TableCell>
+                        </TableRow>
+                    ) : table.getRowModel().rows.map((row) => (
                         <TableRowWithDrawer key={row.id} row={row} onReload={onReload} />
                     ))}
                 </TableBody>
@@ -160,9 +167,28 @@ function MailAccountDrawer({ open, setOpen, account, onReload }: { open: boolean
 
 export function AddAccountDrawer({ open, setOpen, accounts, onReload }: { open: boolean, setOpen: (open: boolean) => void, accounts: emailaccount[], onReload: () => void }) {
     const { resources, auth } = useContext(GlobalContext);
+    const safeAccounts = Array.isArray(accounts) ? accounts : [];
+    const [hydrated, setHydrated] = useState(false);
     const [domain, setDomain] = useState("");
     const [assignTo, setAssignTo] = useState("");
     const [accountsToCreate, setAccountsToCreate] = useState<string[]>([]);
+    const eligibleUsers = (resources?.data?.users ?? []).filter((user) => {
+        return !safeAccounts.find((account) => account.userId === user.id) &&
+            resources?.data?.domains?.find((domain) => domain.id === user.domainId)?.verified;
+    });
+
+    useEffect(() => {
+        setHydrated(true);
+    }, []);
+
+    if (!hydrated) {
+        return (
+            <Button variant="outline" disabled>
+                <PlusIcon size={20} />Import Email Accounts
+            </Button>
+        );
+    }
+
     return (
         <Drawer handleOnly direction="right" open={open} onOpenChange={setOpen}>
             <DrawerTrigger asChild>
@@ -178,10 +204,7 @@ export function AddAccountDrawer({ open, setOpen, accounts, onReload }: { open: 
 
                     <div style={{ padding: "20px" }}>
                         <ItemGroup style={{ border: "1px solid var(--qu-border-color)", borderRadius: "10px", backgroundColor: "var(--qu-header-background)" }}>
-                            {resources?.data?.users?.filter((user) => {
-                                return !accounts.find((account) => account.userId === user.id) &&
-                                    resources?.data?.domains?.find((domain) => domain.id === user.domainId)?.verified
-                            }).map((user, index) => (
+                            {eligibleUsers.map((user, index) => (
                                 <Fragment key={user.id}>
                                     <Item key={user.id}>
                                         <ItemContent style={{ minWidth: "0px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -198,10 +221,7 @@ export function AddAccountDrawer({ open, setOpen, accounts, onReload }: { open: 
                                             }} />
                                         </ItemActions>
                                     </Item>
-                                    {index !== resources?.data?.users?.filter((user) => {
-                                        return !accounts.find((account) => account.userId === user.id) &&
-                                            resources?.data?.domains?.find((domain) => domain.id === user.domainId)?.verified
-                                    }).length - 1 && <ItemSeparator />}
+                                    {index !== eligibleUsers.length - 1 && <ItemSeparator />}
                                 </Fragment>
                             ))}
                         </ItemGroup>
@@ -214,8 +234,9 @@ export function AddAccountDrawer({ open, setOpen, accounts, onReload }: { open: 
                 <DrawerFooter style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-end" }}>
                     <Button variant="outline" onClick={() => setOpen(false)}><XIcon size={20} />Cancel</Button>
                     <Button onClick={async () => {
-                        await Promise.all(accountsToCreate.map((userId) => {
-                            return fetch("/api/admin/accounts", {
+                        try {
+                            const responses = await Promise.all(accountsToCreate.map((userId) => {
+                                return fetch("/api/admin/accounts", {
                                 method: "POST",
                                 headers: {
                                     "Content-Type": "application/json",
@@ -225,13 +246,22 @@ export function AddAccountDrawer({ open, setOpen, accounts, onReload }: { open: 
                                 body: JSON.stringify({
                                     domainId: resources?.data?.users?.find((user) => user.id === userId)?.domainId,
                                     userId,
-                                    address: resources?.data?.users?.find((user) => user.id === userId)?.email.split("@")[0] + "@" + resources?.data?.domains?.find((rdomain) => rdomain.id === resources?.data?.users?.find((user) => user.id === userId)?.domainId)?.name,
+                                    address: resources?.data?.users?.find((user) => user.id === userId)?.email?.split("@")[0] + "@" + resources?.data?.domains?.find((rdomain) => rdomain.id === resources?.data?.users?.find((user) => user.id === userId)?.domainId)?.name,
                                     color: "default"
                                 })
-                            })
-                        }))
-                        setOpen(false);
-                        onReload();
+                                });
+                            }));
+                            const failedResponse = responses.find((response) => !response.ok);
+                            if (failedResponse) {
+                                const data = await failedResponse.json().catch(() => null);
+                                throw new Error(data?.error || "Unable to create email account");
+                            }
+                            setOpen(false);
+                            setAccountsToCreate([]);
+                            onReload();
+                        } catch (error) {
+                            toast.error(error instanceof Error ? error.message : "Unable to create email account");
+                        }
                     }}><CheckIcon size={20} />Add</Button>
                 </DrawerFooter>
             </DrawerContent>

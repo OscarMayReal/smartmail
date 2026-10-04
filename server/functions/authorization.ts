@@ -8,25 +8,32 @@ var prisma = new PrismaClient({
     })
 });
 
+export type AccountAccess = {
+    organizationId?: string;
+    groupIds?: string[];
+};
+
+export const accountAccessWhere = (userId: string, access: AccountAccess = {}) => ({
+    ...(access.organizationId ? { organizationId: access.organizationId } : {}),
+    OR: [
+        { userId },
+        ...(access.groupIds?.length ? [{ type: "shared" as const, groupId: { in: access.groupIds } }] : []),
+    ],
+});
+
 /**
  * Verifies that a user has access to a specific folder
  * @param folderId - The folder ID to check
  * @param userId - The user ID attempting access
  * @returns true if authorized, false otherwise
  */
-export async function verifyFolderAccess(folderId: string, userId: string): Promise<boolean> {
-    const folder = await prisma.folder.findUnique({
-        where: { id: folderId },
-        include: {
-            account: true
-        }
+export async function verifyFolderAccess(folderId: string, userId: string, access: AccountAccess = {}): Promise<boolean> {
+    const folder = await prisma.folder.findFirst({
+        where: { id: folderId, account: accountAccessWhere(userId, access) },
+        select: { id: true },
     });
 
-    if (!folder) {
-        return false;
-    }
-
-    return folder.account.userId === userId;
+    return Boolean(folder);
 }
 
 /**
@@ -35,19 +42,13 @@ export async function verifyFolderAccess(folderId: string, userId: string): Prom
  * @param userId - The user ID attempting access
  * @returns true if authorized, false otherwise
  */
-export async function verifyEmailAccess(emailId: string, userId: string): Promise<boolean> {
-    const email = await prisma.email.findUnique({
-        where: { id: emailId },
-        include: {
-            account: true
-        }
+export async function verifyEmailAccess(emailId: string, userId: string, access: AccountAccess = {}): Promise<boolean> {
+    const email = await prisma.email.findFirst({
+        where: { id: emailId, account: accountAccessWhere(userId, access) },
+        select: { id: true },
     });
 
-    if (!email) {
-        return false;
-    }
-
-    return email.account.userId === userId;
+    return Boolean(email);
 }
 
 /**
@@ -56,19 +57,13 @@ export async function verifyEmailAccess(emailId: string, userId: string): Promis
  * @param userId - The user ID attempting access
  * @returns true if authorized, false otherwise
  */
-export async function verifyCalendarAccess(calendarId: string, userId: string): Promise<boolean> {
-    const calendar = await prisma.calendar.findUnique({
-        where: { id: calendarId },
-        include: {
-            account: true
-        }
+export async function verifyCalendarAccess(calendarId: string, userId: string, access: AccountAccess = {}): Promise<boolean> {
+    const calendar = await prisma.calendar.findFirst({
+        where: { id: calendarId, account: accountAccessWhere(userId, access) },
+        select: { id: true },
     });
 
-    if (!calendar) {
-        return false;
-    }
-
-    return calendar.account.userId === userId;
+    return Boolean(calendar);
 }
 
 /**
@@ -78,36 +73,26 @@ export async function verifyCalendarAccess(calendarId: string, userId: string): 
  * @param userId - The user ID attempting access
  * @returns true if authorized, false otherwise
  */
-export async function verifyEventAccess(eventId: string, userId: string): Promise<boolean> {
-    const event = await prisma.event.findUnique({
-        where: { id: eventId },
-        include: {
-            calendar: {
-                include: {
-                    account: true
-                }
-            },
-            invitees: {
-                include: {
-                    account: true
-                }
-            }
-        }
+export async function verifyEventAccess(eventId: string, userId: string, access: AccountAccess = {}): Promise<boolean> {
+    const accessibleAccounts = await prisma.emailaccount.findMany({
+        where: accountAccessWhere(userId, access),
+        select: { id: true },
     });
 
-    if (!event) {
-        return false;
-    }
+    const event = await prisma.event.findFirst({
+        where: {
+            id: eventId,
+            OR: [
+                { calendar: { account: accountAccessWhere(userId, access) } },
+                ...(accessibleAccounts.length > 0
+                    ? [{ invitees: { some: { accountId: { in: accessibleAccounts.map((account) => account.id) } } } }]
+                    : []),
+            ],
+        },
+        select: { id: true },
+    });
 
-    // Check if user owns the calendar
-    if (event.calendar.account.userId === userId) {
-        return true;
-    }
-
-    // Check if user is an invitee (any of their email accounts is listed as an invitee)
-    const isInvitee = event.invitees.some(invitee => invitee.account.userId === userId);
-
-    return isInvitee;
+    return Boolean(event);
 }
 
 /**
@@ -116,16 +101,13 @@ export async function verifyEventAccess(eventId: string, userId: string): Promis
  * @param userId - The user ID attempting access
  * @returns true if authorized, false otherwise
  */
-export async function verifyAccountAccess(accountId: string, userId: string): Promise<boolean> {
-    const account = await prisma.emailaccount.findUnique({
-        where: { id: accountId }
+export async function verifyAccountAccess(accountId: string, userId: string, access: AccountAccess = {}): Promise<boolean> {
+    const account = await prisma.emailaccount.findFirst({
+        where: { id: accountId, ...accountAccessWhere(userId, access) },
+        select: { id: true },
     });
 
-    if (!account) {
-        return false;
-    }
-
-    return account.userId === userId;
+    return Boolean(account);
 }
 
 /**

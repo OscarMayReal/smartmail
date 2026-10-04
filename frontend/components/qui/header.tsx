@@ -1,8 +1,8 @@
 "use client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { JSX, useEffect, useRef, useState } from "react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ArrowLeftIcon, BellIcon, Building2Icon, ChevronDownIcon, CommandIcon, LayoutGrid, LogInIcon, LogOutIcon, MenuIcon, SearchIcon, SettingsIcon, SparklesIcon, TerminalIcon, UserIcon, UsersIcon } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ArrowLeftIcon, BellIcon, Building2Icon, CheckIcon, ChevronDownIcon, CommandIcon, LayoutGrid, LogInIcon, LogOutIcon, MailIcon, MenuIcon, SearchIcon, SettingsIcon, SparklesIcon, TerminalIcon, UserIcon, UsersIcon } from "lucide-react";
 import { useWindowSize } from "@/lib/screensize";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 // import { AdminSidebar, TeamSidebar, UserSidebar } from "./sidebar";
@@ -176,11 +176,11 @@ export function UserItem({ user, Extra, onClick }: { user: any, Extra?: JSX.Elem
     return (
         <div className="flex items-center gap-2" onClick={onClick}>
             <Avatar className="border border-[var(--qu-border-color)]" style={{ fontSize: "14px", fontWeight: "400" }}>
-                {user.name ? <AvatarFallback style={{ color: "var(--qu-text)" }}>{user.name.charAt(0).toUpperCase() + user.name.charAt(1).toUpperCase()}</AvatarFallback> : null}
+                {user?.name ? <AvatarFallback style={{ color: "var(--qu-text)" }}>{user.name.charAt(0).toUpperCase() + user.name.charAt(1).toUpperCase()}</AvatarFallback> : null}
             </Avatar>
             <div className="grid flex-1 text-left leading-tight">
-                <span className="truncate font-semibold text-sm color-[var(--qu-text)]">{user.name}</span>
-                <span className="truncate opacity-70 text-xs color-[var(--qu-text-secondary)]">{user.email}</span>
+                <span className="truncate font-semibold text-sm color-[var(--qu-text)]">{user?.name}</span>
+                <span className="truncate opacity-70 text-xs color-[var(--qu-text-secondary)]">{user?.email}</span>
             </div>
             {Extra}
         </div>
@@ -188,7 +188,42 @@ export function UserItem({ user, Extra, onClick }: { user: any, Extra?: JSX.Elem
 }
 
 function HeaderUser({ auth }: { auth: any }) {
-    const size = useWindowSize();
+    const [hydrated, setHydrated] = useState(false);
+    const path = usePathname();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const [mailAccounts, setMailAccounts] = useState<Array<{ id: string, address: string, type: "personal" | "shared" }>>([]);
+
+    useEffect(() => {
+        setHydrated(true);
+    }, []);
+
+    useEffect(() => {
+        const sessionId = auth?.data?.sessionId;
+        if (!sessionId || !path.startsWith("/app/mail")) {
+            setMailAccounts([]);
+            return;
+        }
+        fetch("/api/mail/accounts", {
+            headers: { "Authorization": `Bearer ${sessionId}` }
+        }).then(async (response) => {
+            if (!response.ok) return [];
+            const data = await response.json();
+            return Array.isArray(data) ? data : [];
+        }).then(setMailAccounts).catch(() => setMailAccounts([]));
+    }, [auth, path]);
+
+    // Radix generates ids for these controls. Keep the server render and the
+    // first client render free of those controls so auth-dependent content
+    // cannot change the id sequence during hydration.
+    if (!hydrated) {
+        return (
+            <div className="header-user-container-outer" aria-hidden="true">
+                <div style={{ width: "30px", height: "30px", marginRight: "10px", border: "1px solid var(--qu-border-color)", borderRadius: "9999px" }} />
+            </div>
+        );
+    }
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -214,6 +249,25 @@ function HeaderUser({ auth }: { auth: any }) {
                     <UserItem user={auth.data?.user} />
                 </div>
                 <DropdownMenuSeparator />
+                {path.startsWith("/app/mail") && mailAccounts.length > 0 && <DropdownMenuSub>
+                    <DropdownMenuSubTrigger><MailIcon />Act as mailbox</DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                        <DropdownMenuLabel>Mailboxes</DropdownMenuLabel>
+                        {mailAccounts.map((account, index) => {
+                            const selected = searchParams.get("accountId") === account.id || (!searchParams.get("accountId") && index === 0);
+                            return <DropdownMenuItem key={account.id} onClick={() => {
+                                const nextParams = new URLSearchParams(searchParams.toString());
+                                nextParams.set("accountId", account.id);
+                                router.push(`/app/mail?${nextParams.toString()}`);
+                            }}>
+                                <MailIcon />
+                                <span className="truncate">{account.address}</span>
+                                {account.type === "shared" && <span className="ml-auto text-xs opacity-70">Shared</span>}
+                                {selected && <CheckIcon className="ml-auto" />}
+                            </DropdownMenuItem>;
+                        })}
+                    </DropdownMenuSubContent>
+                </DropdownMenuSub>}
                 {/* <DropdownMenuItem className="color-[var(--qu-text)]" onClick={() => { LogOut().then(() => { window.location.href = process.env.NEXT_PUBLIC_API_URL + "/auth/signin?redirectTo=" + window.location.href }) }}><LogOutIcon size={20} />Logout</DropdownMenuItem> */}
 
                 <Link href="/admin"><DropdownMenuItem className="color-[var(--qu-text)]"><SettingsIcon />Admin Center</DropdownMenuItem></Link>

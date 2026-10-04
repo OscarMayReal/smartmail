@@ -2,7 +2,7 @@
 import "./components.css";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Checkbox } from "../ui/checkbox";
-import { ArchiveIcon, BoldIcon, Code2Icon, CodeIcon, FolderIcon, FolderInputIcon, ForwardIcon, InboxIcon, ItalicIcon, ListIcon, ListOrderedIcon, PencilIcon, QuoteIcon, RedoIcon, ReplyIcon, SendIcon, StrikethroughIcon, Trash2Icon, UndoIcon, XIcon } from "lucide-react";
+import { ArchiveIcon, BoldIcon, Code2Icon, CodeIcon, FolderIcon, FolderInputIcon, ForwardIcon, InboxIcon, ItalicIcon, ListIcon, ListOrderedIcon, MailOpenIcon, PencilIcon, QuoteIcon, RedoIcon, ReplyIcon, SendIcon, StrikethroughIcon, Trash2Icon, UndoIcon, XIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { Toggle } from "../ui/toggle";
 import { Switch } from "../ui/switch";
@@ -24,16 +24,16 @@ import router from "next/router";
 import { Tag, TagInput } from "emblor-maintained";
 import { ComposeHeader, RecepientsInput } from "./compose";
 
-export async function moveEmailInteractive({ messageId, messages, router, params, setMessages, folder, auth, moveToNext = true }: { messageId: string, messages: email[], router: any, params: any, setMessages: (messages: email[]) => void, folder: folder, auth: any, moveToNext?: boolean }) {
+export async function moveEmailInteractive({ messageId, messages, router, params, setMessages, folder, auth, accountId, moveToNext = true }: { messageId: string, messages: email[], router: any, params: any, setMessages: (messages: email[]) => void, folder: folder, auth: any, accountId?: string, moveToNext?: boolean }) {
     await fetch(`/api/mail/messages/${messageId}/move`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             "Authorization": "Bearer " + auth.data?.sessionId,
         },
-        body: JSON.stringify({ folderId: folder.id }),
+        body: JSON.stringify({ folderId: folder.id, accountId }),
     })
-    var newMessages = await fetch(`/api/mail/folders/${params.id}/messages`, {
+    var newMessages = await fetch(`/api/mail/folders/${params.id}/messages${accountId ? `?accountId=${encodeURIComponent(accountId)}` : ""}`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
@@ -41,27 +41,66 @@ export async function moveEmailInteractive({ messageId, messages, router, params
         },
     }).then((res) => res.json())
     const thisMessagePosition = messages.findIndex((message) => message.id === messageId)
+    const mailboxQuery = accountId ? `?accountId=${encodeURIComponent(accountId)}` : "";
     if (thisMessagePosition < messages.length - 1 && moveToNext) {
-        router.push(`/app/mail/mailbox/${params.id}/message/${messages[thisMessagePosition + 1].id}`)
+        router.push(`/app/mail/mailbox/${params.id}/message/${messages[thisMessagePosition + 1].id}${mailboxQuery}`)
     } else if (thisMessagePosition > 0 && moveToNext) {
-        router.push(`/app/mail/mailbox/${params.id}/message/${messages[thisMessagePosition - 1].id}`)
+        router.push(`/app/mail/mailbox/${params.id}/message/${messages[thisMessagePosition - 1].id}${mailboxQuery}`)
     } else if (moveToNext) {
-        router.push(`/app/mail/mailbox/${params.id}`)
+        router.push(`/app/mail/mailbox/${params.id}${mailboxQuery}`)
     } else {
-        router.push(`/app/mail/mailbox/${params.id}`)
+        router.push(`/app/mail/mailbox/${params.id}${mailboxQuery}`)
     }
     setMessages(newMessages.map((message: email & { selected: boolean }) => ({ ...message, selected: false })))
     toast.success("Email moved to " + folder.name)
 }
 
+export async function setEmailReadInteractive({ messageId, messages, setMessages, auth, accountId, unread }: { messageId: string, messages: email[], setMessages: (messages: email[]) => void, auth: any, accountId?: string, unread: boolean }) {
+    if (!auth?.data?.sessionId) throw new Error("You must be signed in to update email read state");
+    const response = await fetch(`/api/mail/messages/${messageId}/${unread ? "unread" : "read"}`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + auth.data.sessionId,
+        },
+        body: JSON.stringify({ accountId }),
+    });
+    if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || "Unable to update email read state");
+    }
+    setMessages(messages.map((message) => message.id === messageId ? { ...message, unseen: unread } : message));
+}
+
+export async function permanentlyDeleteEmailInteractive({ messageId, messages, setMessages, auth, accountId }: { messageId: string, messages: email[], setMessages: (messages: email[]) => void, auth: any, accountId?: string }) {
+    if (!auth?.data?.sessionId) throw new Error("You must be signed in to delete email");
+    const response = await fetch(`/api/mail/messages/${messageId}${accountId ? `?accountId=${encodeURIComponent(accountId)}` : ""}`, {
+        method: "DELETE",
+        headers: { "Authorization": "Bearer " + auth.data.sessionId },
+    });
+    if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || "Unable to permanently delete email");
+    }
+    setMessages(messages.filter((message) => message.id !== messageId));
+}
+
 export function MailItem({ item }: { item: email & { selected: boolean } }) {
-    const { setMessages, messages } = useContext(MailContext)
+    const { setMessages, messages, activeAccountId } = useContext(MailContext)
+    const { auth } = useContext(GlobalContext)
     const router = useRouter();
     const params = useParams();
     return (
-        <div className={"mail-item" + (params.messageid == item.id || item.selected ? " active" : "")} onClick={() => { router.push(`/app/mail/mailbox/${params.id}/message/${item.id}`) }}>
+        <div className={"mail-item" + (params.messageid == item.id || item.selected ? " active" : "")} onClick={async () => {
+            try {
+                if (item.unseen) await setEmailReadInteractive({ messageId: item.id, messages, setMessages, auth, accountId: activeAccountId || undefined, unread: false });
+                router.push(`/app/mail/mailbox/${params.id}/message/${item.id}`);
+            } catch (error) {
+                toast.error(error instanceof Error ? error.message : "Unable to mark email as read");
+            }
+        }}>
             <Checkbox checked={item.selected} onCheckedChange={(checked) => {
-                setMessages(messages.map((message) => { if (message.id == item.id) message.selected = checked; return message }))
+                setMessages(messages.map((message) => { if (message.id == item.id) message.selected = checked === true; return message }))
             }} />
             <Avatar style={{ width: "40px", height: "40px", border: "1px solid var(--qu-border-color)" }}>
                 <AvatarFallback className="text-[var(--qu-text)]">AB</AvatarFallback>
@@ -75,15 +114,26 @@ export function MailItem({ item }: { item: email & { selected: boolean } }) {
 }
 
 export function MailboxHeader({ title }: { title: string }) {
-    const { setMessages, messages } = useContext(MailContext)
+    const { setMessages, messages, activeAccountId } = useContext(MailContext)
+    const { auth } = useContext(GlobalContext)
     return (
         <div className="mail-header">
             <Checkbox checked={messages.every((message) => message.selected) && messages.length > 0} onCheckedChange={(checked) => {
-                setMessages(messages.map((message) => { message.selected = checked; return message }))
+                setMessages(messages.map((message) => { message.selected = checked === true; return message }))
             }} />
             <div className="mail-header-title">{messages.some((message) => message.selected) ? messages.filter((message) => message.selected).length + " Selected" : title}</div>
             <div className="flex-1" />
             <div className="flex flex-row gap-2 items-center">
+                <Button variant="ghost" size="sm" disabled={!messages.some((message) => message.unseen)} onClick={async () => {
+                    try {
+                        const unreadMessages = messages.filter((message) => message.unseen);
+                        await Promise.all(unreadMessages.map((message) => setEmailReadInteractive({ messageId: message.id, messages, setMessages, auth, accountId: activeAccountId || undefined, unread: false })));
+                        setMessages(messages.map((message) => ({ ...message, unseen: false })));
+                        toast.success("All emails marked as read");
+                    } catch (error) {
+                        toast.error(error instanceof Error ? error.message : "Unable to mark emails as read");
+                    }
+                }}><MailOpenIcon />Mark all as read</Button>
                 <div className="text-[var(--qu-text-secondary)]">Hide Read</div>
                 <Switch />
             </div>
@@ -91,11 +141,20 @@ export function MailboxHeader({ title }: { title: string }) {
     );
 }
 
-export function MailItemHeader({ message }: { message: email }) {
+export function MailItemHeader({ message, onReadStateChange }: { message: email, onReadStateChange?: (unseen: boolean) => void }) {
     const { auth } = useContext(GlobalContext)
-    const { setMessages, messages, folders } = useContext(MailContext)
+    const { setMessages, messages, folders, activeAccountId } = useContext(MailContext)
     const router = useRouter();
     const params = useParams();
+    const isTrash = folders.find((folder) => folder.type == "smartmail.folder.trash")?.id == params.id;
+    const updateReadState = async () => {
+        try {
+            await setEmailReadInteractive({ messageId: message.id, messages, setMessages, auth, accountId: activeAccountId || undefined, unread: !message.unseen });
+            onReadStateChange?.(!message.unseen);
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Unable to update email read state");
+        }
+    };
     return (
         <div className="mail-header">
             <XIcon size="20" />
@@ -103,11 +162,21 @@ export function MailItemHeader({ message }: { message: email }) {
             <div className="flex-1" />
             <ButtonGroup>
                 {(folders.filter((folder) => folder.type == "smartmail.folder.trash")[0] || {}).id != params.id && <Button variant="outline" size="sm" onClick={() => {
-                    moveEmailInteractive({ messageId: message.id, messages, router, params, setMessages, folder: folders.filter((folder) => folder.type == "smartmail.folder.trash")[0], auth })
+                    moveEmailInteractive({ messageId: message.id, messages, router, params, setMessages, folder: folders.filter((folder) => folder.type == "smartmail.folder.trash")[0], auth, accountId: activeAccountId || undefined })
                 }}><Trash2Icon />Delete</Button>}
                 {(folders.filter((folder) => folder.type == "smartmail.folder.archive")[0] || {}).id != params.id && <Button variant="outline" size="sm" onClick={() => {
-                    moveEmailInteractive({ messageId: message.id, messages, router, params, setMessages, folder: folders.filter((folder) => folder.type == "smartmail.folder.archive")[0], auth })
+                    moveEmailInteractive({ messageId: message.id, messages, router, params, setMessages, folder: folders.filter((folder) => folder.type == "smartmail.folder.archive")[0], auth, accountId: activeAccountId || undefined })
                 }}><ArchiveIcon /> Archive</Button>}
+                {isTrash && <Button variant="destructive" size="sm" onClick={async () => {
+                    try {
+                        await permanentlyDeleteEmailInteractive({ messageId: message.id, messages, setMessages, auth, accountId: activeAccountId || undefined });
+                        router.push(`/app/mail/mailbox/${params.id}${activeAccountId ? `?accountId=${encodeURIComponent(activeAccountId)}` : ""}`);
+                        toast.success("Email permanently deleted");
+                    } catch (error) {
+                        toast.error(error instanceof Error ? error.message : "Unable to permanently delete email");
+                    }
+                }}><Trash2Icon />Delete permanently</Button>}
+                <Button variant="outline" size="sm" onClick={() => void updateReadState}><MailOpenIcon />{message.unseen ? "Mark as read" : "Mark as unread"}</Button>
                 {/* <Button variant="outline" size="sm"><FolderInputIcon /> Move</Button> */}
                 <MoveEmailDropdown messageId={message.id} />
             </ButtonGroup>
@@ -206,7 +275,7 @@ export function MoveSelectedMessagesDropdown() {
 
 function MoveEmailItem({ folder, messageId }: { folder: any, messageId: string | string[] }) {
     const { auth } = useContext(GlobalContext)
-    const { setMessages, messages } = useContext(MailContext)
+    const { setMessages, messages, activeAccountId } = useContext(MailContext)
     const router = useRouter()
     const params = useParams()
     var Icon = getTypeIcon(folder.type)
@@ -214,10 +283,10 @@ function MoveEmailItem({ folder, messageId }: { folder: any, messageId: string |
         <CommandItem disabled={folder.id == params.id} key={folder.id} onSelect={async () => {
             if (Array.isArray(messageId)) {
                 for (const mid of messageId) {
-                    moveEmailInteractive({ messageId: mid, messages, router, params, setMessages, folder, auth, moveToNext: false })
+                    moveEmailInteractive({ messageId: mid, messages, router, params, setMessages, folder, auth, accountId: activeAccountId || undefined, moveToNext: false })
                 }
             } else {
-                moveEmailInteractive({ messageId, messages, router, params, setMessages, folder, auth })
+                moveEmailInteractive({ messageId, messages, router, params, setMessages, folder, auth, accountId: activeAccountId || undefined })
             }
         }}>
             <Icon />
@@ -298,6 +367,7 @@ export function ReplyComposer({ setReplyMode, replyMode, message }: { setReplyMo
         },
     })
     const { auth } = useContext(GlobalContext)
+    const { activeAccountId } = useContext(MailContext)
     const [tags, setTags] = useState<Tag[]>([])
     const [activeTagIndex, setActiveTagIndex] = useState<number>(0)
     const [subject, setSubject] = useState<string>("fwd: " + message.subject)
@@ -331,6 +401,7 @@ export function ReplyComposer({ setReplyMode, replyMode, message }: { setReplyMo
                                 "Authorization": "Bearer " + auth?.data?.sessionId
                             },
                             body: JSON.stringify({
+                                accountId: activeAccountId,
                                 email: {
                                     to: replyMode == "reply" ? message.from : tags.map(tag => tag.text),
                                     subject: replyMode == "reply" ? "Re: " + message.subject : subject,

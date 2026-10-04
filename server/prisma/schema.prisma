@@ -9,18 +9,24 @@ generator client {
   output   = "../generated/prisma"
 }
 
+enum AccountType {
+  personal
+  shared
+}
+
 datasource db {
   provider = "postgresql"
   // url      = env("DATABASE_URL")
 }
 
 model emailaccount {
-  id             String     @id @unique @default(uuid())
+  id             String      @id @unique @default(uuid())
   organizationId String?
-  userId         String
-  createdAt      DateTime   @default(now())
-  accessedAt     DateTime   @default(now())
-  address        String     @unique
+  userId         String?
+  type           AccountType @default(personal)
+  createdAt      DateTime    @default(now())
+  accessedAt     DateTime    @default(now())
+  address        String      @unique
   domainId       String?
   emails         email[]
   folders        folder[]
@@ -28,6 +34,11 @@ model emailaccount {
   contacts       contact[]
   calendars      calendar[]
   invited        invitee[]
+  groupId        String?
+
+  tasksNotesLists TasksNotesList[]
+  tasks task[]
+  notes Note[]
 }
 
 model folder {
@@ -95,4 +106,57 @@ model invitee {
   calendar   calendar?    @relation(fields: [calendarId], references: [id], onDelete: Cascade)
   event      event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
   account    emailaccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
+
+model distributionlist {
+  id        String       @id @unique @default(uuid())
+  name      String
+  notes     String?
+  address   String
+  members   distributionlistmember[]
+}
+
+model distributionlistmember {
+  id              String              @id @unique @default(uuid())
+  name            String
+  email           String
+  distributionListId String
+  distributionList distributionlist @relation(fields: [distributionListId], references: [id], onDelete: Cascade)
+}
+
+model Note {
+  id        String       @id @unique @default(uuid())
+  title     String
+  content   String
+  accountId String
+  config    Json?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  
+  listId    String?
+  list      TasksNotesList? @relation(fields: [listId], references: [id], onDelete: Cascade)
+  
+  account   emailaccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
+
+model TasksNotesList {
+  id        String       @id @unique @default(uuid())
+  name      String
+  accountId String
+  account   emailaccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  tasks     task[]
+  notes     Note[]
+}
+
+model task {
+  id        String       @id @unique @default(uuid())
+  name      String
+  completed Boolean      @default(false)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  config    Json?
+  listId    String?
+  list      TasksNotesList? @relation(fields: [listId], references: [id], onDelete: Cascade)
+  accountId String
+  account   emailaccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }

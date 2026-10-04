@@ -1,3 +1,14 @@
+import { config } from "dotenv";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+// Load the server-local environment first, then fill any missing values from
+// the repository environment. This keeps `npm start` from the server folder
+// compatible with the existing root .env without overriding deployment vars.
+const serverDirectory = dirname(fileURLToPath(import.meta.url));
+config({ path: resolve(serverDirectory, ".env") });
+config({ path: resolve(serverDirectory, "../.env") });
+
 interface AuthConfig {
     appId: string;
     keystoneUrl: string;
@@ -5,7 +16,7 @@ interface AuthConfig {
     appSecret?: string;
 }
 
-interface SessionData {
+export interface SessionData {
     sessionId: string;
     userAppAccessId: string;
     app: App;
@@ -30,7 +41,7 @@ export interface Tenant {
     name?: string;
     email?: string;
     role?: string;
-    groups?: string[];
+    groups?: Array<string | { id?: string; groupId?: string; group?: { id?: string; groupId?: string } }>;
     tenant?: Tenant;
   }
   
