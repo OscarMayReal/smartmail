@@ -7,7 +7,7 @@ import { useContext } from "react";
 import { GlobalContext } from "@/app/app/layout";
 import { useRouter, useParams } from "next/navigation";
 import { toast } from "sonner";
-import { MailContext } from "../../layout";
+import { MailContext } from "@/app/app/mail/layout";
 
 export default function ComposePage() {
     const { auth } = useContext(GlobalContext);

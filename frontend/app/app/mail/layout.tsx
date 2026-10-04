@@ -4,7 +4,7 @@ import { ButtonGroup } from "@/components/ui/button-group";
 import { Button } from "@/components/ui/button";
 import { ChevronDownIcon, FolderIcon, MailboxIcon, PenIcon, TagIcon } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useState, useEffect, useContext, createContext } from "react";
+import { useState, useEffect, useContext, createContext, Suspense } from "react";
 import { GlobalContext } from "../layout";
 import { folder, email } from "@/../server/generated/prisma/browser";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
@@ -30,6 +30,14 @@ export const MailContext = createContext({
 })
 
 export default function MailPage({ children }: { children: React.ReactNode }) {
+    return (
+        <Suspense fallback={<div className="h-full w-full" />}>
+            <MailPageContent>{children}</MailPageContent>
+        </Suspense>
+    );
+}
+
+function MailPageContent({ children }: { children: React.ReactNode }) {
     const { auth } = useContext(GlobalContext)
     const router = useRouter();
     const params = useParams();

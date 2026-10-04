@@ -1,6 +1,6 @@
 "use client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { JSX, useEffect, useRef, useState } from "react";
+import { JSX, Suspense, useEffect, useRef, useState } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ArrowLeftIcon, BellIcon, Building2Icon, CheckIcon, ChevronDownIcon, CommandIcon, LayoutGrid, LogInIcon, LogOutIcon, MailIcon, MenuIcon, SearchIcon, SettingsIcon, SparklesIcon, TerminalIcon, UserIcon, UsersIcon } from "lucide-react";
 import { useWindowSize } from "@/lib/screensize";
@@ -47,7 +47,9 @@ export const AdminHeader = ({ auth }: { auth: any }) => {
                     <SearchBox />
                 </div> */}
             </div>
-            <HeaderUser auth={auth} />
+            <Suspense fallback={<HeaderUserFallback />}>
+                <HeaderUser auth={auth} />
+            </Suspense>
         </header>
     );
 };
@@ -99,7 +101,9 @@ export const Header = ({ auth }: { auth: any }) => {
                     Settings
                 </TooltipContent>
             </Tooltip> */}
-            <HeaderUser auth={auth} />
+            <Suspense fallback={<HeaderUserFallback />}>
+                <HeaderUser auth={auth} />
+            </Suspense>
         </header>
     );
 };
@@ -183,6 +187,14 @@ export function UserItem({ user, Extra, onClick }: { user: any, Extra?: JSX.Elem
                 <span className="truncate opacity-70 text-xs color-[var(--qu-text-secondary)]">{user?.email}</span>
             </div>
             {Extra}
+        </div>
+    );
+}
+
+function HeaderUserFallback() {
+    return (
+        <div className="header-user-container-outer" aria-hidden="true">
+            <div style={{ width: "30px", height: "30px", marginRight: "10px", border: "1px solid var(--qu-border-color)", borderRadius: "9999px" }} />
         </div>
     );
 }
